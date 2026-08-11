@@ -1,4 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Molanko Avatar</string>
+    <string name="app_subtitle">Minecraft skin → pixel avatar</string>
+    <string name="select_skin">Select a Minecraft skin to start</string>
+    <string name="select_skin_hint">Supports 64×64 / 64×32 standard skins</string>
+    <string name="processing">Processing…</string>
+    <string name="options">Options</string>
+    <string name="outline_radius">Outline radius</string>
+    <string name="none">None</string>
+    <string name="outline_color">Outline color</string>
+    <string name="bg_color">Background color</string>
+    <string name="auto_dark">Auto</string>
+    <string name="auto_darker">Auto (Darker)</string>
+    <string name="auto_medium_dark">Auto (Lighter)</string>
+    <string name="pure_black">Black</string>
+    <string name="auto_light">Auto</string>
+    <string name="auto_lighter">Auto (Lighter)</string>
+    <string name="auto_medium_light">Auto (Darker)</string>
+    <string name="pure_white">White</string>
+    <string name="custom">Custom</string>
+    <string name="upscale_48">Upscale to 48×48</string>
+    <string name="fill_background">Fill background</string>
+    <string name="final_scale">Final scale ×%1$d</string>
+    <string name="regenerate">Regenerate</string>
+    <string name="save">Save</string>
+    <string name="pick_image">Pick skin</string>
+    <string name="saved_ok">Saved to Pictures/Molanko</string>
+    <string name="save_failed">Save failed</string>
+    <string name="load_failed">Failed to load image</string>
+    <string name="process_failed">Processing failed: image too small or invalid format</string>
+    <string name="hex_hint">Hex color e.g. #FF5722</string>
+    <string name="apply_custom">Apply</string>
+    <string name="result_preview">Generated result</string>
 </resources>
