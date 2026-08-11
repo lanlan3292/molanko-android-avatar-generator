@@ -359,17 +359,20 @@ fun HomeScreen() {
                     }
 
                     // Expressive Loading Indicator overlay while processing
-                    if (isProcessing) {
-                        //Box(
-                        //    modifier = Modifier
-                        //        .matchParentSize()
-                        //        .background(Color.Black.copy(alpha = 0.35f)
-                        //        )
-                        //)
-                        ContainedLoadingIndicator(
-                            modifier = Modifier.size(64.dp),
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                        )
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = isProcessing,
+                            enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                            exit = fadeOut() + scaleOut(targetScale = 0.8f)
+                        ) {
+                            ContainedLoadingIndicator(
+                                modifier = Modifier.size(64.dp),
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            )
+                        }
                     }
                 }
             }
