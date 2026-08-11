@@ -19,6 +19,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,7 +53,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -66,10 +66,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -85,38 +81,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.processing.TextureProcessor
+import com.molanko.avatargenerator.ui.AvatarViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var sourceBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var resultBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isProcessing by remember { mutableStateOf(false) }
+    // State in ViewModel — survives rotation
+    var sourceBitmap by vm::sourceBitmap
+    var resultBitmap by vm::resultBitmap
+    var isProcessing by vm::isProcessing
 
-    // Options — default upscale48 = true
-    var outlineMode by remember { mutableIntStateOf(0) }
-    var outlinePreset by remember { mutableStateOf("auto_dark") }
-    var bgPreset by remember { mutableStateOf("auto_light") }
-    var upscale48 by remember { mutableStateOf(true) }
-    var fillBackground by remember { mutableStateOf(true) }
-    var scale by remember { mutableFloatStateOf(4f) }
-    var showOptions by remember { mutableStateOf(true) }
+    var outlineMode by vm::outlineMode
+    var outlinePreset by vm::outlinePreset
+    var bgPreset by vm::bgPreset
+    var upscale48 by vm::upscale48
+    var fillBackground by vm::fillBackground
+    var scale by vm::scale
+    var showOptions by vm::showOptions
 
-    // Custom color state
-    var showOutlineCustom by remember { mutableStateOf(false) }
-    var showBgCustom by remember { mutableStateOf(false) }
-    var outlineCustomHex by remember { mutableStateOf("#000000") }
-    var bgCustomHex by remember { mutableStateOf("#FFFFFF") }
+    var showOutlineCustom by vm::showOutlineCustom
+    var showBgCustom by vm::showBgCustom
+    var outlineCustomHex by vm::outlineCustomHex
+    var bgCustomHex by vm::bgCustomHex
 
     fun processImage(
         src: Bitmap,
@@ -308,7 +303,6 @@ fun HomeScreen() {
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Preview card — image fills the square for proper rounded corners
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -326,14 +320,12 @@ fun HomeScreen() {
                         .clip(RoundedCornerShape(28.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Keep previous result while processing to avoid flicker
                     if (resultBitmap != null) {
                         Image(
                             bitmap = resultBitmap!!.asImageBitmap(),
                             contentDescription = stringResource(R.string.result_preview),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
-                            // Nearest-neighbor: no bilinear blur at low scale
                             filterQuality = FilterQuality.None
                         )
                     } else if (!isProcessing) {
@@ -358,26 +350,15 @@ fun HomeScreen() {
                         }
                     }
 
-                    // Expressive Loading Indicator overlay while processing
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = isProcessing,
-                            enter = fadeIn() + scaleIn(initialScale = 0.8f),
-                            exit = fadeOut() + scaleOut(targetScale = 0.8f)
-                        ) {
-                            ContainedLoadingIndicator(
-                                modifier = Modifier.size(64.dp),
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                            )
-                        }
+                    if (isProcessing) {
+                        ContainedLoadingIndicator(
+                            modifier = Modifier.size(64.dp),
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        )
                     }
                 }
             }
 
-            // Options panel
             AnimatedVisibility(
                 visible = showOptions,
                 enter = fadeIn() + scaleIn(),
@@ -398,7 +379,6 @@ fun HomeScreen() {
                         )
                         Spacer(Modifier.height(16.dp))
 
-                        // Outline mode
                         Text(stringResource(R.string.outline_radius), style = MaterialTheme.typography.labelLarge)
                         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                             listOf(0, 1, 2).forEachIndexed { index, value ->
@@ -408,10 +388,7 @@ fun HomeScreen() {
                                         outlineMode = value
                                         triggerProcess()
                                     },
-                                    shape = SegmentedButtonDefaults.itemShape(
-                                        index = index,
-                                        count = 3
-                                    )
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
                                 ) {
                                     Text(if (value == 0) stringResource(R.string.none) else "$value")
                                 }
@@ -420,13 +397,10 @@ fun HomeScreen() {
 
                         Spacer(Modifier.height(16.dp))
 
-                        // Outline color
                         Text(stringResource(R.string.outline_color), style = MaterialTheme.typography.labelLarge)
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
+                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
                         ) {
                             listOf(
                                 "auto_dark" to R.string.auto_dark,
@@ -447,16 +421,13 @@ fun HomeScreen() {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .padding(top = 8.dp)
-                                .horizontalScroll(rememberScrollState())
+                            modifier = Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState())
                         ) {
                             FilterChip(
                                 selected = showOutlineCustom,
                                 onClick = { showOutlineCustom = true },
                                 label = { Text(stringResource(R.string.custom), fontSize = 12.sp) }
                             )
-                            // Color swatches for quick custom pick
                             listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
                                 Box(
                                     modifier = Modifier
@@ -510,7 +481,6 @@ fun HomeScreen() {
 
                         Spacer(Modifier.height(16.dp))
 
-                        // Background color
                         Text(stringResource(R.string.bg_color), style = MaterialTheme.typography.labelLarge)
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -552,8 +522,7 @@ fun HomeScreen() {
                                             width = if (showBgCustom && bgCustomHex.equals(hex, true)) 2.dp else 1.dp,
                                             color = if (showBgCustom && bgCustomHex.equals(hex, true))
                                                 MaterialTheme.colorScheme.primary
-                                            else
-                                                MaterialTheme.colorScheme.outlineVariant,
+                                            else MaterialTheme.colorScheme.outlineVariant,
                                             shape = CircleShape
                                         )
                                         .clickable {
@@ -598,20 +567,13 @@ fun HomeScreen() {
 
                         Spacer(Modifier.height(16.dp))
 
-                        // Toggles
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(stringResource(R.string.upscale_48), style = MaterialTheme.typography.bodyLarge)
-                            Switch(
-                                checked = upscale48,
-                                onCheckedChange = {
-                                    upscale48 = it
-                                    triggerProcess()
-                                }
-                            )
+                            Switch(checked = upscale48, onCheckedChange = { upscale48 = it; triggerProcess() })
                         }
 
                         Row(
@@ -620,22 +582,12 @@ fun HomeScreen() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(stringResource(R.string.fill_background), style = MaterialTheme.typography.bodyLarge)
-                            Switch(
-                                checked = fillBackground,
-                                onCheckedChange = {
-                                    fillBackground = it
-                                    triggerProcess()
-                                }
-                            )
+                            Switch(checked = fillBackground, onCheckedChange = { fillBackground = it; triggerProcess() })
                         }
 
                         Spacer(Modifier.height(12.dp))
 
-                        // Scale slider
-                        Text(
-                            stringResource(R.string.final_scale, scale.toInt()),
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                        Text(stringResource(R.string.final_scale, scale.toInt()), style = MaterialTheme.typography.labelLarge)
                         Slider(
                             value = scale,
                             onValueChange = { scale = it },
