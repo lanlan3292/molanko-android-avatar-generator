@@ -45,12 +45,12 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.online.OnlineSkinExtras
@@ -117,6 +117,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
             alpha.snapTo(0f)
             alpha.animateTo(1f, animationSpec = tween(durationMillis = 500))
             displayBitmap = new
+            newBitmap = null
+        }
+    }
+
+    LaunchedEffect(alpha.value) {
+        if (alpha.value == 1f && newBitmap != null) {
+            displayBitmap = newBitmap
             newBitmap = null
         }
     }
@@ -240,12 +247,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_outlined_file_download),
-                            contentDescription = stringResource(R.string.save)
-                        )
-                    }
+                    ) { Icon(painter = painterResource(id = R.drawable.ic_outlined_file_download), contentDescription = stringResource(R.string.save)) }
                 }
                 OnlineSkinExtras.FetchSkinFab(enabled = !isProcessing) { bmp ->
                     sourceBitmap = bmp
@@ -258,28 +260,16 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     onClick = { imagePicker.launch("image/*") },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_outlined_image),
-                        contentDescription = stringResource(R.string.pick_image)
-                    )
-                }
+                ) { Icon(painter = painterResource(id = R.drawable.ic_outlined_image), contentDescription = stringResource(R.string.pick_image)) }
             }
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .padding(bottom = 20.dp),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f).padding(bottom = 20.dp),
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -289,14 +279,8 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     animationSpec = tween(durationMillis = 600),
                     label = "BlurAnimation"
                 )
-                Box(
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize().blur(radius = blurRadius),
-                        contentAlignment = Alignment.Center
-                    ) {
+                Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp)), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxSize().blur(radius = blurRadius), contentAlignment = Alignment.Center) {
                         if (displayBitmap != null) {
                             Image(
                                 bitmap = displayBitmap!!.asImageBitmap(),
@@ -314,16 +298,8 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                     tint = MaterialTheme.colorScheme.outline
                                 )
                                 Spacer(Modifier.height(12.dp))
-                                Text(
-                                    stringResource(R.string.select_skin),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    stringResource(R.string.select_skin_hint),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.outline
-                                )
+                                Text(stringResource(R.string.select_skin), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.select_skin_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                             }
                         }
                         if (newBitmap != null) {
@@ -360,16 +336,8 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            stringResource(R.string.options),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            if (showOptions) "\u25BE" else "\u25B8",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text(stringResource(R.string.options), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(if (showOptions) "\u25BE" else "\u25B8", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     AnimatedVisibility(
                         visible = showOptions,
@@ -390,7 +358,9 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                         anim.animateTo(
                                             targetValue = target,
                                             animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
-                                        ) { outlineSliderPos = value }
+                                        ) {
+                                            outlineSliderPos = value
+                                        }
                                         outlineMode = target.toInt()
                                         outlineSliderPos = target
                                         triggerProcess()
@@ -399,36 +369,17 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             )
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.outline_color), style = MaterialTheme.typography.labelLarge)
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                            ) {
-                                listOf(
-                                    "auto_dark" to R.string.auto,
-                                    "auto_darker" to R.string.auto_darker,
-                                    "auto_medium_dark" to R.string.auto_lighter
-                                ).forEach { (value, labelRes) ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                                listOf("auto_dark" to R.string.auto, "auto_darker" to R.string.auto_darker, "auto_medium_dark" to R.string.auto_lighter).forEach { (value, labelRes) ->
                                     FilterChip(
                                         selected = outlinePreset == value && !showOutlineCustom,
-                                        onClick = {
-                                            outlinePreset = value
-                                            showOutlineCustom = false
-                                            triggerProcess()
-                                        },
+                                        onClick = { outlinePreset = value; showOutlineCustom = false; triggerProcess() },
                                         label = { Text(stringResource(labelRes), fontSize = 12.sp) }
                                     )
                                 }
                             }
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState())
-                            ) {
-                                FilterChip(
-                                    selected = showOutlineCustom,
-                                    onClick = { showOutlineCustom = true },
-                                    label = { Text(stringResource(R.string.custom), fontSize = 12.sp) }
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState())) {
+                                FilterChip(selected = showOutlineCustom, onClick = { showOutlineCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
                                 listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
                                     Box(
                                         modifier = Modifier
@@ -450,10 +401,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 }
                             }
                             AnimatedVisibility(visible = showOutlineCustom) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                                     OutlinedTextField(
                                         value = outlineCustomHex,
                                         onValueChange = { outlineCustomHex = it },
@@ -479,37 +427,18 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             }
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.bg_color), style = MaterialTheme.typography.labelLarge)
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                listOf(
-                                    "auto_light" to R.string.auto,
-                                    "auto_lighter" to R.string.auto_lighter,
-                                    "auto_medium_light" to R.string.auto_darker
-                                ).forEach { (value, labelRes) ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                listOf("auto_light" to R.string.auto, "auto_lighter" to R.string.auto_lighter, "auto_medium_light" to R.string.auto_darker).forEach { (value, labelRes) ->
                                     FilterChip(
                                         selected = bgPreset == value && !showBgCustom,
-                                        onClick = {
-                                            bgPreset = value
-                                            showBgCustom = false
-                                            triggerProcess()
-                                        },
+                                        onClick = { bgPreset = value; showBgCustom = false; triggerProcess() },
                                         label = { Text(stringResource(labelRes), fontSize = 12.sp) }
                                     )
                                 }
                             }
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.padding(top = 8.dp)
-                            ) {
-                                FilterChip(
-                                    selected = showBgCustom,
-                                    onClick = { showBgCustom = true },
-                                    label = { Text(stringResource(R.string.custom), fontSize = 12.sp) }
-                                )
-                                listOf("#FFFFFF", "#F5F5F5", "#E3F2FD", "#E8F5E9", "#FFF3E0", "#FCE4EC").forEach { hex ->
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                                FilterChip(selected = showBgCustom, onClick = { showBgCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
+                                listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
                                     Box(
                                         modifier = Modifier
                                             .size(28.dp)
@@ -517,9 +446,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                             .background(parseColorSafe(hex))
                                             .border(
                                                 width = if (showBgCustom && bgCustomHex.equals(hex, true)) 2.dp else 1.dp,
-                                                color = if (showBgCustom && bgCustomHex.equals(hex, true))
-                                                    MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.outlineVariant,
+                                                color = if (showBgCustom && bgCustomHex.equals(hex, true)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                                 shape = CircleShape
                                             )
                                             .clickable {
@@ -532,10 +459,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 }
                             }
                             AnimatedVisibility(visible = showBgCustom) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                                     OutlinedTextField(
                                         value = bgCustomHex,
                                         onValueChange = { bgCustomHex = it },
@@ -560,27 +484,16 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 }
                             }
                             Spacer(Modifier.height(16.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(stringResource(R.string.upscale_48), style = MaterialTheme.typography.bodyLarge)
                                 Switch(checked = upscale48, onCheckedChange = { upscale48 = it; triggerProcess() })
                             }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(stringResource(R.string.fill_background), style = MaterialTheme.typography.bodyLarge)
                                 Switch(checked = fillBackground, onCheckedChange = { fillBackground = it; triggerProcess() })
                             }
                             Spacer(Modifier.height(12.dp))
-                            Text(
-                                stringResource(R.string.final_scale, scaleSliderPos.roundToInt()),
-                                style = MaterialTheme.typography.labelLarge
-                            )
+                            Text(stringResource(R.string.final_scale, scaleSliderPos.roundToInt()), style = MaterialTheme.typography.labelLarge)
                             Slider(
                                 value = scaleSliderPos,
                                 onValueChange = { scaleSliderPos = it },
@@ -592,7 +505,9 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                         anim.animateTo(
                                             targetValue = target,
                                             animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
-                                        ) { scaleSliderPos = value }
+                                        ) {
+                                            scaleSliderPos = value
+                                        }
                                         scale = target
                                         scaleSliderPos = target
                                         triggerProcess()
@@ -605,10 +520,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = sourceBitmap != null && !isProcessing
                             ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_default_refresh),
-                                    contentDescription = null
-                                )
+                                Icon(painter = painterResource(id = R.drawable.ic_default_refresh), contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
                                 Text(stringResource(R.string.regenerate))
                             }
