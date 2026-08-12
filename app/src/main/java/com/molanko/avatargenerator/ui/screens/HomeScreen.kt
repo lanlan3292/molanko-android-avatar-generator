@@ -31,6 +31,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -243,13 +245,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(bottom = 12.dp)
-                    ) { Icon(Icons.Default.Download, contentDescription = stringResource(R.string.save)) }
+                    ) { Icon(Icons.Outlined.FileDownload, contentDescription = stringResource(R.string.save)) }
                 }
-                FloatingActionButton(
+                MediumFloatingActionButton(
                     onClick = { imagePicker.launch("image/*") },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) { Icon(Icons.Default.Image, contentDescription = stringResource(R.string.pick_image)) }
+                ) { Icon(Icons.Outlined.Image, contentDescription = stringResource(R.string.pick_image)) }
             }
         }
     ) { innerPadding ->
@@ -427,7 +429,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             }
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                                 FilterChip(selected = showBgCustom, onClick = { showBgCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
-                                listOf("#FFFFFF", "#F5F5F5", "#E3F2FD", "#E8F5E9", "#FFF3E0", "#FCE4EC").forEach { hex ->
+                                listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
                                     Box(
                                         modifier = Modifier
                                             .size(28.dp)
@@ -517,7 +519,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     }
                 }
             }
-            Spacer(Modifier.height(80.dp))
+            Spacer(Modifier.height(120.dp))
         }
     }
 }
