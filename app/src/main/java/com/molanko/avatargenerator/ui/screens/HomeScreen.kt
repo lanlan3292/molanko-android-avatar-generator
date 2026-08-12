@@ -11,10 +11,9 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,7 +62,6 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // ViewModel 状态
     var sourceBitmap by vm::sourceBitmap
     var resultBitmap by vm::resultBitmap
     var isProcessing by vm::isProcessing
@@ -83,30 +81,26 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
 
     var displayBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var newBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var targetAlpha by remember { mutableStateOf(0f) }
-
-    val alpha by animateFloatAsState(
-        targetValue = targetAlpha,
-        animationSpec = tween(durationMillis = 500),
-        finishedListener = { endValue ->
-            if (endValue == 1f && newBitmap != null) {
-                displayBitmap = newBitmap
-                newBitmap = null
-                targetAlpha = 0f
-            }
-        }
-    )
+    val alpha = remember { Animatable(0f) }
 
     LaunchedEffect(resultBitmap) {
         resultBitmap?.let { new ->
             if (displayBitmap == null) {
                 displayBitmap = new
                 newBitmap = null
-                targetAlpha = 0f
+                alpha.snapTo(0f)
             } else {
                 newBitmap = new
-                targetAlpha = 1f
+                alpha.snapTo(0f)
+                alpha.animateTo(1f, animationSpec = tween(durationMillis = 500))
             }
+        }
+    }
+
+    LaunchedEffect(alpha.value) {
+        if (alpha.value == 1f && newBitmap != null) {
+            displayBitmap = newBitmap
+            newBitmap = null
         }
     }
 
@@ -369,7 +363,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 contentDescription = stringResource(R.string.result_preview),
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .graphicsLayer { this.alpha = alpha },
+                                    .graphicsLayer { this.alpha = alpha.value },
                                 contentScale = ContentScale.Crop,
                                 filterQuality = FilterQuality.None
                             )
