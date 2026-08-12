@@ -452,7 +452,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 }
                             }
                             Spacer(Modifier.height(16.dp))
-                            Row(Modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(stringResource(R.string.upscale_48), style = MaterialTheme.typography.bodyLarge)
                                 Switch(checked = upscale48, onCheckedChange = { upscale48 = it; triggerProcess() })
                             }
