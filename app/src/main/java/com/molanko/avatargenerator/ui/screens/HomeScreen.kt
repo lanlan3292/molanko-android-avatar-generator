@@ -52,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.processing.TextureProcessor
 import com.molanko.avatargenerator.ui.AvatarViewModel
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -340,7 +341,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 onValueChange = { outlineSliderPos = it },
                                 valueRange = 0f..2f,
                                 onValueChangeFinished = {
-                                    val target = outlineSliderPos.toInt().toFloat().coerceIn(0f, 2f)
+                                    val target = outlineSliderPos.roundToInt().toFloat().coerceIn(0f, 2f)
                                     scope.launch {
                                         val anim = Animatable(outlineSliderPos)
                                         anim.animateTo(
@@ -481,13 +482,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 Switch(checked = fillBackground, onCheckedChange = { fillBackground = it; triggerProcess() })
                             }
                             Spacer(Modifier.height(12.dp))
-                            Text(stringResource(R.string.final_scale, scaleSliderPos.toInt()), style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.final_scale, scaleSliderPos.roundToInt()), style = MaterialTheme.typography.labelLarge)
                             Slider(
                                 value = scaleSliderPos,
                                 onValueChange = { scaleSliderPos = it },
                                 valueRange = 1f..50f,
                                 onValueChangeFinished = {
-                                    val target = scaleSliderPos.toInt().toFloat().coerceIn(1f, 50f)
+                                    val target = scaleSliderPos.roundToInt().toFloat().coerceIn(1f, 50f)
                                     scope.launch {
                                         val anim = Animatable(scaleSliderPos)
                                         anim.animateTo(
