@@ -25,6 +25,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations.addAll(listOf("zh", "en", "zh-rCN", "zh-rTW"))
     }
+
+    flavorDimensions += "mode"
+    productFlavors {
+        create("offline") {
+            dimension = "mode"
+            applicationIdSuffix = ".offline"
+            versionNameSuffix = "-offline"
+            buildConfigField("boolean", "ONLINE_SKIN_FETCH", "false")
+        }
+        create("online") {
+            dimension = "mode"
+            applicationIdSuffix = ".online"
+            versionNameSuffix = "-online"
+            buildConfigField("boolean", "ONLINE_SKIN_FETCH", "true")
+        }
+    }
+
     signingConfigs {
         create("release") {
             storeFile = file("../release.keystore")
@@ -54,6 +71,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         checkReleaseBuilds = false
