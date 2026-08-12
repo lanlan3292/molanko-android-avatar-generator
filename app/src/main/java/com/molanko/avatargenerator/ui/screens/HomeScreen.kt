@@ -523,7 +523,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     }
                 }
             }
-            Spacer(Modifier.height(180.dp))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars.add(WindowInsets(bottom = 180.dp))))
         }
     }
 }
