@@ -26,18 +26,30 @@ object MojangSkinFetcher {
         class InvalidInput : FetchError("Invalid username or UUID")
         class PlayerNotFound : FetchError("Player not found")
         class NoSkin : FetchError("No skin texture on profile")
-        class Network(cause: Throwable) : FetchError(cause.message ?: "Network error")
+        class Network(val detail: String, cause: Throwable? = null) : FetchError(detail)
     }
 
     suspend fun fetch(usernameOrUuid: String): Result = withContext(Dispatchers.IO) {
         val input = usernameOrUuid.trim()
         if (input.isEmpty()) throw FetchError.InvalidInput()
 
-        val uuidNoDash = resolveUuid(input)
-        val (skinUrl, name) = fetchSkinUrl(uuidNoDash)
-        val bmp = downloadBitmap(skinUrl)
-            ?: throw FetchError.NoSkin()
-        Result(bitmap = bmp, resolvedName = name, uuid = formatUuid(uuidNoDash))
+        try {
+            val uuidNoDash = resolveUuid(input)
+            val (skinUrl, name) = fetchSkinUrl(uuidNoDash)
+            val bmp = downloadBitmap(skinUrl)
+                ?: throw FetchError.NoSkin()
+            Result(bitmap = bmp, resolvedName = name, uuid = formatUuid(uuidNoDash))
+        } catch (e: FetchError) {
+            throw e
+        } catch (e: java.net.UnknownHostException) {
+            throw FetchError.Network("DNS: ${e.message}", e)
+        } catch (e: java.net.SocketTimeoutException) {
+            throw FetchError.Network("Timeout: ${e.message}", e)
+        } catch (e: javax.net.ssl.SSLException) {
+            throw FetchError.Network("SSL: ${e.message}", e)
+        } catch (e: java.io.IOException) {
+            throw FetchError.Network("IO: ${e.javaClass.simpleName}: ${e.message}", e)
+        }
     }
 
     private fun resolveUuid(input: String): String {
@@ -58,7 +70,10 @@ object MojangSkinFetcher {
                     return id.lowercase()
                 }
                 204, 404 -> throw FetchError.PlayerNotFound()
-                else -> throw FetchError.Network(Exception("HTTP ${conn.responseCode}"))
+                else -> {
+                    val errBody = runCatching { conn.errorStream?.bufferedReader()?.readText() }.getOrNull()
+                    throw FetchError.Network("HTTP ${conn.responseCode}" + (errBody?.take(120)?.let { ": $it" } ?: ""))
+                }
             }
         } finally {
             conn.disconnect()
@@ -93,7 +108,10 @@ object MojangSkinFetcher {
                     return url to name
                 }
                 204, 404 -> throw FetchError.PlayerNotFound()
-                else -> throw FetchError.Network(Exception("HTTP ${conn.responseCode}"))
+                else -> {
+                    val errBody = runCatching { conn.errorStream?.bufferedReader()?.readText() }.getOrNull()
+                    throw FetchError.Network("HTTP ${conn.responseCode}" + (errBody?.take(120)?.let { ": $it" } ?: ""))
+                }
             }
         } finally {
             conn.disconnect()
@@ -103,8 +121,15 @@ object MojangSkinFetcher {
     private fun downloadBitmap(url: String): Bitmap? {
         val conn = open(url)
         try {
-            if (conn.responseCode != 200) return null
+            if (conn.responseCode != 200) {
+                val errBody = runCatching { conn.errorStream?.bufferedReader()?.readText() }.getOrNull()
+                throw FetchError.Network(
+                    "Skin download HTTP ${conn.responseCode}" +
+                        (errBody?.take(80)?.let { ": $it" } ?: "") + " url=$url"
+                )
+            }
             return BitmapFactory.decodeStream(conn.inputStream)
+                ?: throw FetchError.Network("Failed to decode skin PNG from $url")
         } finally {
             conn.disconnect()
         }
