@@ -27,12 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material.icons.outlined.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -292,7 +287,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         } else if (!isProcessing && newBitmap == null) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(
-                                    imageVector = Icons.Default.Image,
+                                    painter = painterResource(id = R.drawable.ic_outlined_image),
                                     contentDescription = null,
                                     modifier = Modifier.size(64.dp),
                                     tint = MaterialTheme.colorScheme.outline

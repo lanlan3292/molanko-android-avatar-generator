@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.PersonSearch
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
@@ -59,7 +57,7 @@ object OnlineSkinExtras {
             modifier = Modifier.padding(bottom = 12.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.PersonSearch,
+                painter = painterResource(id = R.drawable.ic_outline_person_search),
                 contentDescription = stringResource(R.string.fetch_skin)
             )
         }
@@ -131,7 +129,11 @@ object OnlineSkinExtras {
 
         AlertDialog(
             onDismissRequest = { if (!loading) onDismiss() },
-            icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+            icon = { Icon(
+                painter = painterResource(id = R.drawable.ic_outline_cloud_download_24),
+                contentDescription = null
+                ) 
+            },
             title = { Text(stringResource(R.string.fetch_skin_title)) },
             text = {
                 Column {

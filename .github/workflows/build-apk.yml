@@ -32,11 +32,8 @@ jobs:
       - name: Grant execute permission
         run: chmod +x ./gradlew
 
-      - name: Build Online Debug APK
-        run: ./gradlew assembleOnlineDebug
-
-      - name: Build Offline Debug APK
-        run: ./gradlew assembleOfflineDebug
+      - name: Build Debug APK
+        run: ./gradlew assembleOnlineDebug assembleOfflineDebug
 
       - name: Upload Online Debug APK
         uses: actions/upload-artifact@v4
