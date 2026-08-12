@@ -11,12 +11,12 @@
     <string name="outline_color">輪廓顏色</string>
     <string name="bg_color">背景顏色</string>
     <string name="auto">自動</string>
-    <string name="auto_darker">自動（更深）</string>
-    <string name="auto_lighter">自動（更淺）</string>
+    <string name="auto_darker">自動 (更深)</string>
+    <string name="auto_lighter">自動 (更淺)</string>
     <string name="pure_white">純白</string>
     <string name="custom">自訂</string>
     <string name="upscale_48">放大到 48×48</string>
-    <string name="fill_background">填滿背景</string>
+    <string name="fill_background">填充背景</string>
     <string name="final_scale">最終縮放 ×%1$d</string>
     <string name="regenerate">重新生成</string>
     <string name="save">儲存</string>
@@ -28,4 +28,17 @@
     <string name="hex_hint">十六進位顏色 如 #FF5722</string>
     <string name="apply_custom">套用</string>
     <string name="result_preview">生成結果</string>
+    <string name="fetch_skin">線上取得皮膚</string>
+    <string name="fetch_skin_title">從 Mojang 取得</string>
+    <string name="fetch_skin_hint">輸入 Minecraft 使用者名稱或 UUID</string>
+    <string name="fetch_skin_label">使用者名稱 / UUID</string>
+    <string name="fetch_action">取得</string>
+    <string name="fetching">正在取得皮膚…</string>
+    <string name="fetch_ok">已載入皮膚：%1$s</string>
+    <string name="fetch_empty">請輸入使用者名稱或 UUID</string>
+    <string name="fetch_invalid">使用者名稱或 UUID 無效</string>
+    <string name="fetch_not_found">找不到該玩家</string>
+    <string name="fetch_no_skin">該玩家沒有皮膚貼圖</string>
+    <string name="fetch_network">網路錯誤，請檢查連線</string>
+    <string name="cancel">取消</string>
 </resources>

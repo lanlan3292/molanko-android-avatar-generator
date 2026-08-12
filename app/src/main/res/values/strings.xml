@@ -28,4 +28,17 @@
     <string name="hex_hint">Hex color e.g. #FF5722</string>
     <string name="apply_custom">Apply</string>
     <string name="result_preview">Generated result</string>
+    <string name="fetch_skin">Fetch skin online</string>
+    <string name="fetch_skin_title">Fetch from Mojang</string>
+    <string name="fetch_skin_hint">Enter a Minecraft username or UUID</string>
+    <string name="fetch_skin_label">Username / UUID</string>
+    <string name="fetch_action">Fetch</string>
+    <string name="fetching">Fetching skin…</string>
+    <string name="fetch_ok">Loaded skin: %1$s</string>
+    <string name="fetch_empty">Please enter a username or UUID</string>
+    <string name="fetch_invalid">Invalid username or UUID</string>
+    <string name="fetch_not_found">Player not found</string>
+    <string name="fetch_no_skin">This player has no skin texture</string>
+    <string name="fetch_network">Network error, check connection</string>
+    <string name="cancel">Cancel</string>
 </resources>

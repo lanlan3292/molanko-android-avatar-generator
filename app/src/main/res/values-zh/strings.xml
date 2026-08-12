@@ -28,4 +28,17 @@
     <string name="hex_hint">十六进制颜色 如 #FF5722</string>
     <string name="apply_custom">应用</string>
     <string name="result_preview">生成结果</string>
+    <string name="fetch_skin">在线获取皮肤</string>
+    <string name="fetch_skin_title">从 Mojang 获取</string>
+    <string name="fetch_skin_hint">输入 Minecraft 用户名或 UUID</string>
+    <string name="fetch_skin_label">用户名 / UUID</string>
+    <string name="fetch_action">获取</string>
+    <string name="fetching">正在获取皮肤…</string>
+    <string name="fetch_ok">已加载皮肤：%1$s</string>
+    <string name="fetch_empty">请输入用户名或 UUID</string>
+    <string name="fetch_invalid">用户名或 UUID 无效</string>
+    <string name="fetch_not_found">找不到该玩家</string>
+    <string name="fetch_no_skin">该玩家没有皮肤贴图</string>
+    <string name="fetch_network">网络错误，请检查连接</string>
+    <string name="cancel">取消</string>
 </resources>
