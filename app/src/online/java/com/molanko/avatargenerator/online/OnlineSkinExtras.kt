@@ -1,6 +1,7 @@
 package com.molanko.avatargenerator.online
 
 import android.graphics.Bitmap
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,8 @@ import kotlinx.coroutines.launch
  * Offline flavor provides empty stubs with the same API surface.
  */
 object OnlineSkinExtras {
+
+    private const val TAG = "MojangSkin"
 
     @Composable
     fun FetchSkinFab(
@@ -103,7 +106,7 @@ object OnlineSkinExtras {
                         Toast.LENGTH_SHORT
                     ).show()
                 } catch (e: MojangSkinFetcher.FetchError) {
-                    errorText = when (e) {
+                    val base = when (e) {
                         is MojangSkinFetcher.FetchError.InvalidInput ->
                             context.getString(R.string.fetch_invalid)
                         is MojangSkinFetcher.FetchError.PlayerNotFound ->
@@ -113,8 +116,13 @@ object OnlineSkinExtras {
                         is MojangSkinFetcher.FetchError.Network ->
                             context.getString(R.string.fetch_network)
                     }
-                } catch (_: Exception) {
-                    errorText = context.getString(R.string.fetch_network)
+                    val detail = e.message?.takeIf { it.isNotBlank() && it != base }
+                    errorText = if (detail != null) "$base\n$detail" else base
+                    Log.e(TAG, "fetch failed: $base / ${e.message}", e)
+                } catch (e: Exception) {
+                    errorText = context.getString(R.string.fetch_network) +
+                        "\n" + (e.message ?: e.javaClass.simpleName)
+                    Log.e(TAG, "fetch unexpected", e)
                 } finally {
                     loading = false
                 }
