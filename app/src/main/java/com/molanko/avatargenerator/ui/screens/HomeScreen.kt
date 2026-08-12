@@ -272,7 +272,12 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             )
                         } else if (!isProcessing && newBitmap == null) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.Image, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
                                 Spacer(Modifier.height(12.dp))
                                 Text(stringResource(R.string.select_skin), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(stringResource(R.string.select_skin_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
@@ -288,7 +293,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             )
                         }
                     }
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = isProcessing,
                         enter = fadeIn() + scaleIn(initialScale = 0.8f),
                         exit = fadeOut() + scaleOut(targetScale = 0.8f)
@@ -345,25 +350,46 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 FilterChip(selected = showOutlineCustom, onClick = { showOutlineCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
                                 listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
                                     Box(
-                                        modifier = Modifier.size(28.dp).clip(CircleShape).background(parseColorSafe(hex))
-                                            .border(if (showOutlineCustom && outlineCustomHex.equals(hex, true)) 2.dp else 0.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                                            .clickable { outlineCustomHex = hex; outlinePreset = hex; showOutlineCustom = true; triggerProcess() }
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(parseColorSafe(hex))
+                                            .border(
+                                                width = if (showOutlineCustom && outlineCustomHex.equals(hex, true)) 2.dp else 0.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                shape = CircleShape
+                                            )
+                                            .clickable {
+                                                outlineCustomHex = hex
+                                                outlinePreset = hex
+                                                showOutlineCustom = true
+                                                triggerProcess()
+                                            }
                                     )
                                 }
                             }
                             AnimatedVisibility(visible = showOutlineCustom) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                                     OutlinedTextField(
-                                        value = outlineCustomHex, onValueChange = { outlineCustomHex = it },
-                                        label = { Text(stringResource(R.string.hex_hint)) }, singleLine = true, modifier = Modifier.weight(1f),
+                                        value = outlineCustomHex,
+                                        onValueChange = { outlineCustomHex = it },
+                                        label = { Text(stringResource(R.string.hex_hint)) },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(1f),
                                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                         keyboardActions = KeyboardActions(onDone = {
-                                            if (isValidHex(outlineCustomHex)) { outlinePreset = normalizeHex(outlineCustomHex); triggerProcess() }
+                                            if (isValidHex(outlineCustomHex)) {
+                                                outlinePreset = normalizeHex(outlineCustomHex)
+                                                triggerProcess()
+                                            }
                                         })
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     FilledTonalButton(onClick = {
-                                        if (isValidHex(outlineCustomHex)) { outlinePreset = normalizeHex(outlineCustomHex); triggerProcess() }
+                                        if (isValidHex(outlineCustomHex)) {
+                                            outlinePreset = normalizeHex(outlineCustomHex)
+                                            triggerProcess()
+                                        }
                                     }) { Text(stringResource(R.string.apply_custom)) }
                                 }
                             }
@@ -382,29 +408,46 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 FilterChip(selected = showBgCustom, onClick = { showBgCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
                                 listOf("#FFFFFF", "#F5F5F5", "#E3F2FD", "#E8F5E9", "#FFF3E0", "#FCE4EC").forEach { hex ->
                                     Box(
-                                        modifier = Modifier.size(28.dp).clip(CircleShape).background(parseColorSafe(hex))
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(parseColorSafe(hex))
                                             .border(
-                                                if (showBgCustom && bgCustomHex.equals(hex, true)) 2.dp else 1.dp,
-                                                if (showBgCustom && bgCustomHex.equals(hex, true)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                                                CircleShape
+                                                width = if (showBgCustom && bgCustomHex.equals(hex, true)) 2.dp else 1.dp,
+                                                color = if (showBgCustom && bgCustomHex.equals(hex, true)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                                shape = CircleShape
                                             )
-                                            .clickable { bgCustomHex = hex; bgPreset = hex; showBgCustom = true; triggerProcess() }
+                                            .clickable {
+                                                bgCustomHex = hex
+                                                bgPreset = hex
+                                                showBgCustom = true
+                                                triggerProcess()
+                                            }
                                     )
                                 }
                             }
                             AnimatedVisibility(visible = showBgCustom) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                                     OutlinedTextField(
-                                        value = bgCustomHex, onValueChange = { bgCustomHex = it },
-                                        label = { Text(stringResource(R.string.hex_hint)) }, singleLine = true, modifier = Modifier.weight(1f),
+                                        value = bgCustomHex,
+                                        onValueChange = { bgCustomHex = it },
+                                        label = { Text(stringResource(R.string.hex_hint)) },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(1f),
                                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                         keyboardActions = KeyboardActions(onDone = {
-                                            if (isValidHex(bgCustomHex)) { bgPreset = normalizeHex(bgCustomHex); triggerProcess() }
+                                            if (isValidHex(bgCustomHex)) {
+                                                bgPreset = normalizeHex(bgCustomHex)
+                                                triggerProcess()
+                                            }
                                         })
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     FilledTonalButton(onClick = {
-                                        if (isValidHex(bgCustomHex)) { bgPreset = normalizeHex(bgCustomHex); triggerProcess() }
+                                        if (isValidHex(bgCustomHex)) {
+                                            bgPreset = normalizeHex(bgCustomHex)
+                                            triggerProcess()
+                                        }
                                     }) { Text(stringResource(R.string.apply_custom)) }
                                 }
                             }
@@ -466,4 +509,6 @@ private fun normalizeHex(hex: String): String = "#" + hex.trim().removePrefix("#
 
 private fun parseColorSafe(hex: String): Color = try {
     Color(android.graphics.Color.parseColor(normalizeHex(hex)))
-} catch (_: Exception) { Color.Gray }
+} catch (_: Exception) {
+    Color.Gray
+}
