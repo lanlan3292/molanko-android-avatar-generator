@@ -336,7 +336,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             )
                         }
                     }
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = isProcessing,
                         enter = fadeIn() + scaleIn(initialScale = 0.8f),
                         exit = fadeOut() + scaleOut(targetScale = 0.8f)
