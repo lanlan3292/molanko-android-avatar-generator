@@ -67,6 +67,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     val scope = rememberCoroutineScope()
     var processJob by remember { mutableStateOf<Job?>(null) }
     var scaleSliderPos by remember { mutableFloatStateOf(vm.scale) }
+    var outlineSliderPos by remember { mutableFloatStateOf(vm.outlineMode.toFloat()) }
 
     LaunchedEffect(vm.scale) {
         if (kotlin.math.abs(scaleSliderPos - vm.scale) > 0.01f) {
@@ -79,6 +80,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     var isProcessing by vm::isProcessing
 
     var outlineMode by vm::outlineMode
+
+    LaunchedEffect(outlineMode) {
+        if (kotlin.math.abs(outlineSliderPos - outlineMode.toFloat()) > 0.01f) {
+            outlineSliderPos = outlineMode.toFloat()
+        }
+    }
+
     var outlinePreset by vm::outlinePreset
     var bgPreset by vm::bgPreset
     var upscale48 by vm::upscale48
@@ -329,11 +337,23 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.outline_radius), style = MaterialTheme.typography.labelLarge)
                             Slider(
-                                value = outlineMode.toFloat(),
-                                onValueChange = { outlineMode = it.toInt() },
+                                value = outlineSliderPos,
+                                onValueChange = { outlineSliderPos = it },
                                 valueRange = 0f..2f,
-                                steps = 1,
-                                onValueChangeFinished = { triggerProcess() }
+                                onValueChangeFinished = {
+                                    val target = outlineSliderPos.toInt().toFloat().coerceIn(0f, 2f)
+                                    scope.launch {
+                                        val start = outlineSliderPos
+                                        animate(
+                                            initialValue = start,
+                                            targetValue = target,
+                                            animationSpec = tween(180, easing = FastOutSlowInEasing)
+                                        ) { value, _ -> outlineSliderPos = value }
+                                        outlineMode = target.toInt()
+                                        outlineSliderPos = target
+                                        triggerProcess()
+                                    }
+                                }
                             )
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.outline_color), style = MaterialTheme.typography.labelLarge)
@@ -452,7 +472,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 }
                             }
                             Spacer(Modifier.height(16.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Row(Modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(stringResource(R.string.upscale_48), style = MaterialTheme.typography.bodyLarge)
                                 Switch(checked = upscale48, onCheckedChange = { upscale48 = it; triggerProcess() })
                             }
