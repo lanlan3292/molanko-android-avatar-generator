@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.processing.TextureProcessor
@@ -245,13 +246,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(bottom = 12.dp)
-                    ) { Icon(Icons.Outlined.FileDownload, contentDescription = stringResource(R.string.save)) }
+                    ) { Icon(painter = painterResource(id = R.drawable.ic_outlined_file_download),contentDescription = stringResource(R.string.save)) }
                 }
                 MediumFloatingActionButton(
                     onClick = { imagePicker.launch("image/*") },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) { Icon(Icons.Outlined.Image, contentDescription = stringResource(R.string.pick_image)) }
+                ) { Icon(painter = painterResource(id = R.drawable.ic_outlined_image),contentDescription = stringResource(R.string.pick_image)) }
             }
         }
     ) { innerPadding ->
@@ -511,7 +512,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = sourceBitmap != null && !isProcessing
                             ) {
-                                Icon(Icons.Default.Refresh, contentDescription = null)
+                                Icon(painter = painterResource(id = R.drawable.ic_default_refresh),contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
                                 Text(stringResource(R.string.regenerate))
                             }
@@ -519,7 +520,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     }
                 }
             }
-            Spacer(Modifier.height(120.dp))
+            Spacer(Modifier.height(180.dp))
         }
     }
 }

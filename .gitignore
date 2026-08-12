@@ -12,3 +12,5 @@
 *.aab
 app/build/
 debug.keystore
+.kotlin/
+release.keystore
