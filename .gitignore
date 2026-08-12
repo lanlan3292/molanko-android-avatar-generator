@@ -11,3 +11,4 @@
 *.ap_
 *.aab
 app/build/
+debug.keystore

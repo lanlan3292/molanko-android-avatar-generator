@@ -22,7 +22,14 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Grant execute permission for Gradle
+      - name: Restore default debug keystore
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p ~/.android
+          echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
+
+      - name: Grant execute permission
         run: chmod +x ./gradlew
 
       - name: Build Debug APK
@@ -32,6 +39,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: |
-            **/build/outputs/apk/debug/*.apk
+          path: '**/build/outputs/apk/debug/*.apk'
           retention-days: 7
