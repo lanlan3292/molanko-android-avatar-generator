@@ -10,29 +10,17 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,37 +32,16 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ContainedLoadingIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -82,7 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.blur
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.processing.TextureProcessor
@@ -90,9 +56,6 @@ import com.molanko.avatargenerator.ui.AvatarViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.windowInsetsPadding
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -100,7 +63,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // State in ViewModel — survives rotation
+    // ViewModel 状态
     var sourceBitmap by vm::sourceBitmap
     var resultBitmap by vm::resultBitmap
     var isProcessing by vm::isProcessing
@@ -117,6 +80,35 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     var showBgCustom by vm::showBgCustom
     var outlineCustomHex by vm::outlineCustomHex
     var bgCustomHex by vm::bgCustomHex
+
+    var displayBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var newBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var targetAlpha by remember { mutableStateOf(0f) }
+
+    val alpha by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = tween(durationMillis = 500),
+        finishedListener = { endValue ->
+            if (endValue == 1f && newBitmap != null) {
+                displayBitmap = newBitmap
+                newBitmap = null
+                targetAlpha = 0f
+            }
+        }
+    )
+
+    LaunchedEffect(resultBitmap) {
+        resultBitmap?.let { new ->
+            if (displayBitmap == null) {
+                displayBitmap = new
+                newBitmap = null
+                targetAlpha = 0f
+            } else {
+                newBitmap = new
+                targetAlpha = 1f
+            }
+        }
+    }
 
     fun processImage(
         src: Bitmap,
@@ -323,67 +315,81 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
             ) {
-                            val blurRadius by animateDpAsState(
+                val blurRadius by animateDpAsState(
                     targetValue = if (isProcessing) 16.dp else 0.dp,
+                    animationSpec = tween(durationMillis = 600),
                     label = "BlurAnimation"
                 )
-                        
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(28.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .blur(radius = blurRadius),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (resultBitmap != null) {
-                        Image(
-                            bitmap = resultBitmap!!.asImageBitmap(),
-                            contentDescription = stringResource(R.string.result_preview),
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                            filterQuality = FilterQuality.None
-                        )
-                    } else if (!isProcessing) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.outline
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .blur(radius = blurRadius),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (displayBitmap != null) {
+                            Image(
+                                bitmap = displayBitmap!!.asImageBitmap(),
+                                contentDescription = stringResource(R.string.result_preview),
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                filterQuality = FilterQuality.None
                             )
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                stringResource(R.string.select_skin),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                stringResource(R.string.select_skin_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
+                        } else if (!isProcessing && newBitmap == null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                                Spacer(Modifier.height(12.dp))
+                                Text(
+                                    stringResource(R.string.select_skin),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    stringResource(R.string.select_skin_hint),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
+
+                        if (newBitmap != null) {
+                            Image(
+                                bitmap = newBitmap!!.asImageBitmap(),
+                                contentDescription = stringResource(R.string.result_preview),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer { this.alpha = alpha },
+                                contentScale = ContentScale.Crop,
+                                filterQuality = FilterQuality.None
                             )
                         }
                     }
-                }
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = isProcessing,
-                    enter = fadeIn() + scaleIn(initialScale = 0.8f),
-                    exit = fadeOut() + scaleOut(targetScale = 0.8f)
-                ) {
-                    ContainedLoadingIndicator(
-                        modifier = Modifier.size(64.dp),
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                    )
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isProcessing,
+                        enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                        exit = fadeOut() + scaleOut(targetScale = 0.8f)
+                    ) {
+                        ContainedLoadingIndicator(
+                            modifier = Modifier.size(64.dp),
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
-        }
 
-            AnimatedVisibility(
+            androidx.compose.animation.AnimatedVisibility(
                 visible = showOptions,
                 enter = fadeIn() + scaleIn(),
                 exit = fadeOut() + scaleOut()
@@ -404,20 +410,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         Spacer(Modifier.height(16.dp))
 
                         Text(stringResource(R.string.outline_radius), style = MaterialTheme.typography.labelLarge)
-                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                            listOf(0, 1, 2).forEachIndexed { index, value ->
-                                SegmentedButton(
-                                    selected = outlineMode == value,
-                                    onClick = {
-                                        outlineMode = value
-                                        triggerProcess()
-                                    },
-                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
-                                ) {
-                                    Text(if (value == 0) stringResource(R.string.none) else "$value")
-                                }
-                            }
-                        }
+                        Slider(
+                            value = outlineMode.toFloat(),
+                            onValueChange = { outlineMode = it.toInt() },
+                            valueRange = 0f..2f,
+                            steps = 1,
+                            onValueChangeFinished = { triggerProcess() }
+                        )
 
                         Spacer(Modifier.height(16.dp))
 
@@ -472,7 +471,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 )
                             }
                         }
-                        AnimatedVisibility(visible = showOutlineCustom) {
+                        androidx.compose.animation.AnimatedVisibility(visible = showOutlineCustom) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(top = 8.dp)
@@ -558,7 +557,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 )
                             }
                         }
-                        AnimatedVisibility(visible = showBgCustom) {
+                        androidx.compose.animation.AnimatedVisibility(visible = showBgCustom) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(top = 8.dp)
