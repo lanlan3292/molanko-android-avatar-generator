@@ -492,9 +492,9 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             Slider(
                                 value = scaleSliderPos,
                                 onValueChange = { scaleSliderPos = it },
-                                valueRange = 1f..50f,
+                                valueRange = 1f..100f,
                                 onValueChangeFinished = {
-                                    val target = scaleSliderPos.roundToInt().toFloat().coerceIn(1f, 50f)
+                                    val target = scaleSliderPos.roundToInt().toFloat().coerceIn(1f, 100f)
                                     scope.launch {
                                         val anim = Animatable(scaleSliderPos)
                                         anim.animateTo(
