@@ -10,13 +10,9 @@
     <string name="none">None</string>
     <string name="outline_color">Outline color</string>
     <string name="bg_color">Background color</string>
-    <string name="auto_dark">Auto</string>
+    <string name="auto">Auto</string>
     <string name="auto_darker">Auto (Darker)</string>
-    <string name="auto_medium_dark">Auto (Lighter)</string>
-    <string name="pure_black">Black</string>
-    <string name="auto_light">Auto</string>
     <string name="auto_lighter">Auto (Lighter)</string>
-    <string name="auto_medium_light">Auto (Darker)</string>
     <string name="pure_white">White</string>
     <string name="custom">Custom</string>
     <string name="upscale_48">Upscale to 48×48</string>

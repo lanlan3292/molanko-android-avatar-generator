@@ -10,13 +10,9 @@
     <string name="none">无</string>
     <string name="outline_color">轮廓颜色</string>
     <string name="bg_color">背景颜色</string>
-    <string name="auto_dark">自动</string>
+    <string name="auto">自动</string>
     <string name="auto_darker">自动 (更深)</string>
-    <string name="auto_medium_dark">自动 (更浅)</string>
-    <string name="pure_black">纯黑</string>
-    <string name="auto_light">自动</string>
     <string name="auto_lighter">自动 (更浅)</string>
-    <string name="auto_medium_light">自动 (更深)</string>
     <string name="pure_white">纯白</string>
     <string name="custom">自定义</string>
     <string name="upscale_48">放大到 48×48</string>

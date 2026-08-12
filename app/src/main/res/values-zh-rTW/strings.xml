@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Molanko Avatar</string>
+    <string name="app_subtitle">Minecraft 皮膚 → 像素頭像</string>
+    <string name="select_skin">選擇 Minecraft 皮膚開始</string>
+    <string name="select_skin_hint">支援 64×64 / 64×32 標準皮膚</string>
+    <string name="processing">處理中…</string>
+    <string name="options">生成選項</string>
+    <string name="outline_radius">輪廓半徑</string>
+    <string name="none">無</string>
+    <string name="outline_color">輪廓顏色</string>
+    <string name="bg_color">背景顏色</string>
+    <string name="auto">自動</string>
+    <string name="auto_darker">自動（更深）</string>
+    <string name="auto_lighter">自動（更淺）</string>
+    <string name="pure_white">純白</string>
+    <string name="custom">自訂</string>
+    <string name="upscale_48">放大到 48×48</string>
+    <string name="fill_background">填滿背景</string>
+    <string name="final_scale">最終縮放 ×%1$d</string>
+    <string name="regenerate">重新生成</string>
+    <string name="save">儲存</string>
+    <string name="pick_image">選擇皮膚</string>
+    <string name="saved_ok">已儲存到 Pictures/Molanko</string>
+    <string name="save_failed">儲存失敗</string>
+    <string name="load_failed">無法載入圖片</string>
+    <string name="process_failed">處理失敗：圖片尺寸不足或格式錯誤</string>
+    <string name="hex_hint">十六進位顏色 如 #FF5722</string>
+    <string name="apply_custom">套用</string>
+    <string name="result_preview">生成結果</string>
+</resources>
