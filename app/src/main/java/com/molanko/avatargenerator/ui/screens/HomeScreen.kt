@@ -13,7 +13,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -343,12 +342,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 onValueChangeFinished = {
                                     val target = outlineSliderPos.toInt().toFloat().coerceIn(0f, 2f)
                                     scope.launch {
-                                        val start = outlineSliderPos
-                                        animate(
-                                            initialValue = start,
+                                        val anim = Animatable(outlineSliderPos)
+                                        anim.animateTo(
                                             targetValue = target,
-                                            animationSpec = tween(180, easing = FastOutSlowInEasing)
-                                        ) { value, _ -> outlineSliderPos = value }
+                                            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
+                                        ) {
+                                            outlineSliderPos = value
+                                        }
                                         outlineMode = target.toInt()
                                         outlineSliderPos = target
                                         triggerProcess()
@@ -472,7 +472,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 }
                             }
                             Spacer(Modifier.height(16.dp))
-                            Row(Modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(stringResource(R.string.upscale_48), style = MaterialTheme.typography.bodyLarge)
                                 Switch(checked = upscale48, onCheckedChange = { upscale48 = it; triggerProcess() })
                             }
@@ -489,12 +489,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 onValueChangeFinished = {
                                     val target = scaleSliderPos.toInt().toFloat().coerceIn(1f, 50f)
                                     scope.launch {
-                                        val start = scaleSliderPos
-                                        animate(
-                                            initialValue = start,
+                                        val anim = Animatable(scaleSliderPos)
+                                        anim.animateTo(
                                             targetValue = target,
-                                            animationSpec = tween(180, easing = FastOutSlowInEasing)
-                                        ) { value, _ -> scaleSliderPos = value }
+                                            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
+                                        ) {
+                                            scaleSliderPos = value
+                                        }
                                         scale = target
                                         scaleSliderPos = target
                                         triggerProcess()
