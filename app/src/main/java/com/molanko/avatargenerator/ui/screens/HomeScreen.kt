@@ -15,6 +15,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -81,6 +82,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.blur
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.processing.TextureProcessor
@@ -88,6 +90,9 @@ import com.molanko.avatargenerator.ui.AvatarViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -244,6 +249,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
@@ -271,7 +277,10 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
             )
         },
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.navigationBarsPadding()
+            ) {
                 if (resultBitmap != null) {
                     FloatingActionButton(
                         onClick = { resultBitmap?.let { saveResult(it) } },
@@ -314,10 +323,21 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
             ) {
+                            val blurRadius by animateDpAsState(
+                    targetValue = if (isProcessing) 16.dp else 0.dp,
+                    label = "BlurAnimation"
+                )
+                        
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(28.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .blur(radius = blurRadius),
                     contentAlignment = Alignment.Center
                 ) {
                     if (resultBitmap != null) {
@@ -349,15 +369,19 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             )
                         }
                     }
-
-                    if (isProcessing) {
-                        ContainedLoadingIndicator(
-                            modifier = Modifier.size(64.dp),
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                        )
-                    }
+                }
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isProcessing,
+                    enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                    exit = fadeOut() + scaleOut(targetScale = 0.8f)
+                ) {
+                    ContainedLoadingIndicator(
+                        modifier = Modifier.size(64.dp),
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    )
                 }
             }
+        }
 
             AnimatedVisibility(
                 visible = showOptions,
@@ -512,7 +536,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 onClick = { showBgCustom = true },
                                 label = { Text(stringResource(R.string.custom), fontSize = 12.sp) }
                             )
-                            listOf("#FFFFFF", "#F5F5F5", "#E3F2FD", "#E8F5E9", "#FFF3E0", "#FCE4EC").forEach { hex ->
+                            listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
                                 Box(
                                     modifier = Modifier
                                         .size(28.dp)
