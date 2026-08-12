@@ -109,13 +109,13 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
         resultBitmap?.let { new ->
             if (displayBitmap == null) {
                 displayBitmap = new
-                newBitmap = null
-                alpha.snapTo(0f)
             } else {
                 newBitmap = new
-                alpha.snapTo(0f)
-                alpha.animateTo(1f, animationSpec = tween(durationMillis = 500))
             }
+            alpha.snapTo(0f)
+            alpha.animateTo(1f, animationSpec = tween(durationMillis = 500))
+            displayBitmap = new
+            newBitmap = null
         }
     }
 

@@ -14,12 +14,12 @@ class AvatarViewModel : ViewModel() {
     var resultBitmap by mutableStateOf<Bitmap?>(null)
     var isProcessing by mutableStateOf(false)
 
-    var outlineMode by mutableIntStateOf(0)
+    var outlineMode by mutableIntStateOf(2)
     var outlinePreset by mutableStateOf("auto_dark")
     var bgPreset by mutableStateOf("auto_light")
     var upscale48 by mutableStateOf(true)
     var fillBackground by mutableStateOf(true)
-    var scale by mutableFloatStateOf(4f)
+    var scale by mutableFloatStateOf(5f)
     var showOptions by mutableStateOf(true)
 
     var showOutlineCustom by mutableStateOf(false)
