@@ -30,13 +30,11 @@ android {
     productFlavors {
         create("offline") {
             dimension = "mode"
-            applicationIdSuffix = ".offline"
             versionNameSuffix = "-offline"
             buildConfigField("boolean", "ONLINE_SKIN_FETCH", "false")
         }
         create("online") {
             dimension = "mode"
-            applicationIdSuffix = ".online"
             versionNameSuffix = "-online"
             buildConfigField("boolean", "ONLINE_SKIN_FETCH", "true")
         }
