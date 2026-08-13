@@ -40,14 +40,14 @@ jobs:
         run: ./gradlew assembleOnlineDebug assembleOfflineDebug --no-daemon
 
       - name: Upload Online Debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: app-online-debug
           path: '**/build/outputs/apk/online/debug/*.apk'
           retention-days: 7
 
       - name: Upload Offline Debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: app-offline-debug
           path: '**/build/outputs/apk/offline/debug/*.apk'

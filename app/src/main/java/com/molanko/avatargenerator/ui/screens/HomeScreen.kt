@@ -301,7 +301,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).padding(bottom = 20.dp),
+                modifier = Modifier.sizeIn(maxWidth = 500.dp, maxHeight = 500.dp).fillMaxWidth().aspectRatio(1f).padding(bottom = 20.dp),
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -358,7 +358,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
             }
 
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.sizeIn(maxWidth = 500.dp).fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
@@ -457,7 +457,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             }
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.bg_color), style = MaterialTheme.typography.labelLarge)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                                 listOf("auto_light" to R.string.auto, "auto_lighter" to R.string.auto_lighter, "auto_medium_light" to R.string.auto_darker).forEach { (value, labelRes) ->
                                     FilterChip(
                                         selected = bgPreset == value && !showBgCustom,
@@ -466,7 +466,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                     )
                                 }
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(top = 8.dp).horizontalScroll(rememberScrollState())) {
                                 FilterChip(selected = showBgCustom, onClick = { showBgCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
                                 listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
                                     Box(
