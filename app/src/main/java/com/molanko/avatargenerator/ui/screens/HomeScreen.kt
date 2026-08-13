@@ -324,7 +324,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         } else if (!isProcessing && newBitmap == null) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(
-                                    imageVector = androidx.compose.material.icons.Icons.Default.Image,
+                                    painter = painterResource(id = R.drawable.ic_outlined_image),
                                     contentDescription = null,
                                     modifier = Modifier.size(64.dp),
                                     tint = MaterialTheme.colorScheme.outline
