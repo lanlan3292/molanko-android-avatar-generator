@@ -46,6 +46,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.online.OnlineSkinExtras
@@ -221,18 +224,49 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
         }
     }
 
+    // ================= 渐变变色核心逻辑开始 =================
+    // 1. 创建绑定的 ScrollState
+    val scrollState = rememberScrollState()
+
+    // 2. 计算滑动比例 (在 0dp ~ 80dp 之间平滑计算 0f ~ 1f)
+    val density = LocalDensity.current
+    val transitionPx = with(density) { 80.dp.toPx() }
+    val scrollRatio by remember {
+        derivedStateOf {
+            (scrollState.value / transitionPx).coerceIn(0f, 1f)
+        }
+    }
+
+    // 3. 在基础颜色和目标颜色间插值过渡
+    val topBarBgColor = lerp(
+        start = MaterialTheme.colorScheme.surface,
+        stop = MaterialTheme.colorScheme.surfaceContainer,
+        fraction = scrollRatio
+    )
+    
+    // 4. 计算阴影 (向上滚动时渐现 3.dp 阴影)
+    val topBarElevation = (scrollRatio * 3).dp
+    // ================= 渐变变色核心逻辑结束 =================
+
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.app_subtitle), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-            )
+            Surface(
+                shadowElevation = topBarElevation, // 动态阴影
+                color = topBarBgColor              // 动态插值背景色
+            ) {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.app_subtitle), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent // 容器设为透明，交由外层 Surface 统一处理颜色和阴影
+                    )
+                )
+            }
         },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End, modifier = Modifier.navigationBarsPadding()) {
@@ -260,7 +294,11 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(innerPadding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(scrollState) // 绑定记住的 scrollState
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
@@ -492,9 +530,9 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             Slider(
                                 value = scaleSliderPos,
                                 onValueChange = { scaleSliderPos = it },
-                                valueRange = 1f..100f,
+                                valueRange = 1f..50f,
                                 onValueChangeFinished = {
-                                    val target = scaleSliderPos.roundToInt().toFloat().coerceIn(1f, 100f)
+                                    val target = scaleSliderPos.roundToInt().toFloat().coerceIn(1f, 50f)
                                     scope.launch {
                                         val anim = Animatable(scaleSliderPos)
                                         anim.animateTo(
