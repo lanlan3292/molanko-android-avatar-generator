@@ -20,20 +20,24 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Restore default debug keystore
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
           mkdir -p ~/.android
-          echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
+          if [ -n "$DEBUG_KEYSTORE_BASE64" ]; then
+            echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
+          fi
 
       - name: Grant execute permission
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleOnlineDebug assembleOfflineDebug
+      - name: Build Debug APKs
+        run: ./gradlew assembleOnlineDebug assembleOfflineDebug --no-daemon
 
       - name: Upload Online Debug APK
         uses: actions/upload-artifact@v4

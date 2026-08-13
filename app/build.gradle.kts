@@ -1,11 +1,5 @@
 import java.util.Properties
 
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(localPropertiesFile.inputStream())
-}
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -40,15 +34,6 @@ android {
         }
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("../release.keystore")
-            storePassword = localProperties.getProperty("KEY_PASSWORD") ?: ""
-            keyAlias = localProperties.getProperty("KEY_ALIAS") ?: ""
-            keyPassword = localProperties.getProperty("KEY_PASSWORD") ?: ""
-        }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -57,7 +42,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
