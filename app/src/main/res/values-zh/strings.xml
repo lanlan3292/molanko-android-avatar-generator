@@ -21,7 +21,9 @@
     <string name="regenerate">重新生成</string>
     <string name="save">保存</string>
     <string name="pick_image">选择皮肤</string>
-    <string name="saved_ok">已保存到 Pictures/Molanko</string>
+    <string name="saving">正在保存…</string>
+    <string name="saving_hint">正在应用最终缩放并写入文件</string>
+    <string name="saved_ok">保存成功</string>
     <string name="save_failed">保存失败</string>
     <string name="load_failed">无法加载图片</string>
     <string name="process_failed">处理失败：图片尺寸不足或格式错误</string>
