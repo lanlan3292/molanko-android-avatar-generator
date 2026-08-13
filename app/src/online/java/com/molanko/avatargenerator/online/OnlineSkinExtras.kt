@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.molanko.avatargenerator.R
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 /**
  * Online-flavor UI extras: FAB + dialog to pull a skin from Mojang by name/UUID.
@@ -83,6 +84,13 @@ object OnlineSkinExtras {
         var query by remember { mutableStateOf("") }
         var loading by remember { mutableStateOf(false) }
         var errorText by remember { mutableStateOf<String?>(null) }
+        
+        var fetchJob by remember { mutableStateOf<Job?>(null) }
+
+        fun cancelAndDismiss() {
+            fetchJob?.cancel()
+            onDismiss()
+        }
 
         fun doFetch() {
             if (loading) return
@@ -93,7 +101,8 @@ object OnlineSkinExtras {
             }
             loading = true
             errorText = null
-            scope.launch {
+
+            fetchJob = scope.launch {
                 try {
                     val result = MojangSkinFetcher.fetch(q)
                     onLoaded(result.bitmap)
@@ -103,6 +112,8 @@ object OnlineSkinExtras {
                         context.getString(R.string.fetch_ok, label),
                         Toast.LENGTH_SHORT
                     ).show()
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    Log.d(TAG, "Fetch cancelled by user")
                 } catch (e: MojangSkinFetcher.FetchError) {
                     val base = when (e) {
                         is MojangSkinFetcher.FetchError.InvalidInput ->
@@ -183,7 +194,7 @@ object OnlineSkinExtras {
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDismiss, enabled = !loading) {
+                TextButton(onClick = { cancelAndDismiss() }) {
                     Text(stringResource(R.string.cancel))
                 }
             }

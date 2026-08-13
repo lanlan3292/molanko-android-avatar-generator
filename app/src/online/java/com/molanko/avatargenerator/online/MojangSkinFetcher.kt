@@ -5,6 +5,10 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -34,11 +38,19 @@ object MojangSkinFetcher {
         if (input.isEmpty()) throw FetchError.InvalidInput()
 
         try {
+            ensureActive()
             val uuidNoDash = resolveUuid(input)
+            
+            ensureActive()
             val (skinUrl, name) = fetchSkinUrl(uuidNoDash)
+            
+            ensureActive()
             val bmp = downloadBitmap(skinUrl)
                 ?: throw FetchError.NoSkin()
+
             Result(bitmap = bmp, resolvedName = name, uuid = formatUuid(uuidNoDash))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: FetchError) {
             throw e
         } catch (e: java.net.UnknownHostException) {
@@ -48,11 +60,12 @@ object MojangSkinFetcher {
         } catch (e: javax.net.ssl.SSLException) {
             throw FetchError.Network("SSL: ${e.message}", e)
         } catch (e: java.io.IOException) {
+            currentCoroutineContext().ensureActive()
             throw FetchError.Network("IO: ${e.javaClass.simpleName}: ${e.message}", e)
         }
     }
 
-    private fun resolveUuid(input: String): String {
+    private suspend fun resolveUuid(input: String): String {
         val stripped = input.replace("-", "")
         if (stripped.length == 32 && stripped.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
             return stripped.lowercase()
@@ -60,6 +73,7 @@ object MojangSkinFetcher {
         if (!input.matches(Regex("^[A-Za-z0-9_]{1,16}$"))) {
             throw FetchError.InvalidInput()
         }
+        
         val conn = open("https://api.mojang.com/users/profiles/minecraft/$input")
         try {
             when (conn.responseCode) {
@@ -80,8 +94,8 @@ object MojangSkinFetcher {
         }
     }
 
-    private fun fetchSkinUrl(uuidNoDash: String): Pair<String, String?> {
-        val conn = open("https://sessionserver.mojang.com/session/minecraft/profile/$uuidNoDash")
+    private suspend fun fetchSkinUrl(uuidNoDash: String): Pair<String, String?> {
+        val conn = open("https://sessionserver.mojang.com/session/minecraft/$uuidNoDash")
         try {
             when (conn.responseCode) {
                 200 -> {
@@ -118,7 +132,7 @@ object MojangSkinFetcher {
         }
     }
 
-    private fun downloadBitmap(url: String): Bitmap? {
+    private suspend fun downloadBitmap(url: String): Bitmap? {
         val conn = open(url)
         try {
             if (conn.responseCode != 200) {
@@ -135,8 +149,8 @@ object MojangSkinFetcher {
         }
     }
 
-    private fun open(url: String): HttpURLConnection {
-        return (URL(url).openConnection() as HttpURLConnection).apply {
+    private suspend fun open(url: String): HttpURLConnection {
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 12_000
             readTimeout = 15_000
             instanceFollowRedirects = true
@@ -144,6 +158,12 @@ object MojangSkinFetcher {
             setRequestProperty("User-Agent", "MolankoAvatarGenerator/1.0")
             setRequestProperty("Accept", "application/json, image/png, */*")
         }
+
+        currentCoroutineContext().job.invokeOnCompletion {
+            conn.disconnect()
+        }
+
+        return conn
     }
 
     private fun formatUuid(noDash: String): String {
