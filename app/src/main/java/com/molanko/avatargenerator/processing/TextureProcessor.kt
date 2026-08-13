@@ -19,9 +19,9 @@ import kotlin.math.roundToInt
 object TextureProcessor {
 
     data class ProcessOptions(
-        val outlineMode: Int = 0,          // 0 = none, 1+ = radius
-        val outlineColor: String = "#000000", // hex or "auto_dark" / "auto_darker" / "auto_medium_dark"
-        val bgColor: String = "#ffffff",      // hex or "auto_light" / "auto_lighter" / "auto_medium_light"
+        val outlineMode: Int = 0,
+        val outlineColor: String = "#000000",
+        val bgColor: String = "#ffffff",
         val upscale48: Boolean = false,
         val fillBackground: Boolean = true,
         val scale: Float = 1f
@@ -29,141 +29,78 @@ object TextureProcessor {
 
     data class Rgb(val r: Int, val g: Int, val b: Int)
 
-    // ---------- Public entry ----------
-
     fun processTexture(source: Bitmap, options: ProcessOptions = ProcessOptions()): Bitmap {
         require(source.width >= 64 && source.height >= 16) {
             "Image too small: ${source.width}×${source.height}, need at least 64×64"
         }
 
-        val headRgb = sampleHeadColor(source)
-        val resolvedOutline = resolveColor(options.outlineColor, headRgb, dark = true)
-        val resolvedBg = resolveColor(options.bgColor, headRgb, dark = false)
+        val head = Bitmap.createBitmap(64, 16, Bitmap.Config.ARGB_8888)
+        Canvas(head).drawBitmap(
+            source,
+            Rect(0, 0, 64, 16),
+            Rect(0, 0, 64, 16),
+            null
+        )
+        val headAvg = getAverageColor(head)
+        head.recycle()
 
-        val base = renderHead(source, options, resolvedOutline, resolvedBg)
+        val base32 = createBaseTexture(source)
+
+        val finalBase = buildFinalCanvas(base32, options, headAvg)
+        base32.recycle()
 
         return if (options.scale <= 1f) {
-            base
+            finalBase
         } else {
-            val scaled = applyScale(base, options.scale)
-            if (scaled !== base) base.recycle()
+            val scaled = applyScale(finalBase, options.scale)
+            finalBase.recycle()
             scaled
         }
     }
 
-    private fun sampleHeadColor(source: Bitmap): Rgb {
-        // Sample a few opaque pixels from the head region (8,8)-(16,16) face area heuristic
-        var rSum = 0L; var gSum = 0L; var bSum = 0L; var count = 0
-        val w = source.width
-        val h = source.height
-        val x0 = (w * 8 / 64).coerceAtLeast(0)
-        val y0 = (h * 8 / 64).coerceAtLeast(0)
-        val x1 = (w * 16 / 64).coerceAtMost(w)
-        val y1 = (h * 16 / 64).coerceAtMost(h)
-        for (y in y0 until y1) {
-            for (x in x0 until x1) {
-                val c = source.getPixel(x, y)
-                val a = (c ushr 24) and 0xFF
-                if (a < 128) continue
-                rSum += (c shr 16) and 0xFF
-                gSum += (c shr 8) and 0xFF
-                bSum += c and 0xFF
-                count++
-            }
-        }
-        if (count == 0) return Rgb(128, 128, 128)
-        return Rgb((rSum / count).toInt(), (gSum / count).toInt(), (bSum / count).toInt())
+    private fun createBaseTexture(source: Bitmap): Bitmap {
+        val canvasBmp = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888)
+        val ctx = Canvas(canvasBmp)
+        val alpha = 76f / 255f
+
+        drawStretch(ctx, source, 56, 8, 8, 8, 10, 7, 18, 18, 0f)
+        drawStretch(ctx, source, 48, 8, 8, 8, 4, 7, 18, 18, 0f)
+        drawStretch(ctx, source, 8, 8, 8, 8, 7, 10, 18, 18, 0f)
+        drawStretch(ctx, source, 40, 8, 8, 8, 7, 4, 18, 18, alpha)
+        drawStretch(ctx, source, 16, 8, 8, 8, 10, 10, 12, 12, 0f)
+        drawStretch(ctx, source, 24, 8, 8, 8, 10, 4, 12, 12, alpha)
+
+        return canvasBmp
     }
 
-    private fun resolveColor(spec: String, head: Rgb, dark: Boolean): Int {
-        val s = spec.trim().lowercase()
-        when {
-            s.startsWith("#") || s.all { it in '0'..'9' || it in 'a'..'f' } -> {
-                return try {
-                    Color.parseColor(if (s.startsWith("#")) s else "#$s")
-                } catch (_: Exception) {
-                    if (dark) Color.BLACK else Color.WHITE
-                }
-            }
-            s.contains("darker") -> return shade(head, if (dark) 0.35f else 1.35f)
-            s.contains("medium") -> return shade(head, if (dark) 0.55f else 1.2f)
-            s.contains("dark") -> return shade(head, if (dark) 0.45f else 1.25f)
-            s.contains("lighter") -> return shade(head, if (dark) 0.7f else 1.5f)
-            s.contains("light") -> return shade(head, if (dark) 0.6f else 1.4f)
-            else -> return if (dark) Color.BLACK else Color.WHITE
-        }
-    }
-
-    private fun shade(rgb: Rgb, factor: Float): Int {
-        fun ch(v: Int) = (v * factor).roundToInt().coerceIn(0, 255)
-        return Color.rgb(ch(rgb.r), ch(rgb.g), ch(rgb.b))
-    }
-
-    private fun renderHead(
-        source: Bitmap,
-        options: ProcessOptions,
-        outlineColor: Int,
-        bgColor: Int
-    ): Bitmap {
-        val (finalW, finalH, offsetX, offsetY) = if (options.upscale48) {
-            listOf(48, 48, 8, 8)
-        } else {
-            listOf(32, 32, 0, 0)
-        }
+    private fun buildFinalCanvas(base32: Bitmap, options: ProcessOptions, headAvg: Rgb): Bitmap {
+        val (finalW, finalH) = if (options.upscale48) 48 to 48 else 32 to 32
+        val offset = if (options.upscale48) 8 else 0
 
         val out = Bitmap.createBitmap(finalW, finalH, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(out)
+
         if (options.fillBackground) {
-            canvas.drawColor(bgColor)
-        } else {
-            canvas.drawColor(Color.TRANSPARENT)
+            val bgHex = resolveBgColor(options.bgColor, headAvg)
+            canvas.drawColor(Color.parseColor(bgHex))
         }
-
-        // Head base 8x8 from (8,8), hat overlay from (40,8)
-        val scale = if (options.upscale48) 4 else 4 // 8 -> 32
-        val destSize = 8 * 4 // always draw 32x32 head into canvas
-
-        // Draw base head
-        drawStretch(canvas, source, 8, 8, 8, 8, offsetX, offsetY, destSize, destSize, 0f)
-        // Hat layer
-        drawStretch(canvas, source, 40, 8, 8, 8, offsetX, offsetY, destSize, destSize, 0f)
 
         if (options.outlineMode > 0) {
-            applyOutline(out, options.outlineMode, outlineColor)
-        }
-        return out
-    }
-
-    private fun applyOutline(bmp: Bitmap, radius: Int, color: Int) {
-        // Simple outline: for transparent-ish edge neighbors of opaque pixels
-        val w = bmp.width
-        val h = bmp.height
-        val src = IntArray(w * h)
-        bmp.getPixels(src, 0, w, 0, 0, w, h)
-        val dst = src.copyOf()
-        val opaque = BooleanArray(w * h) { ((src[it] ushr 24) and 0xFF) >= 128 }
-        for (y in 0 until h) {
-            for (x in 0 until w) {
-                val i = y * w + x
-                if (opaque[i]) continue
-                var near = false
-                for (dy in -radius..radius) {
-                    for (dx in -radius..radius) {
-                        if (dx == 0 && dy == 0) continue
-                        val nx = x + dx
-                        val ny = y + dy
-                        if (nx !in 0 until w || ny !in 0 until h) continue
-                        if (opaque[ny * w + nx]) {
-                            near = true
-                            break
-                        }
-                    }
-                    if (near) break
+            val outlineHex = resolveOutlineColor(options.outlineColor, headAvg)
+            val outlineColor = Color.parseColor(outlineHex)
+            val paint = Paint().apply { color = outlineColor; isAntiAlias = false }
+            val r = options.outlineMode
+            for (dy in -r..r) {
+                for (dx in -r..r) {
+                    if (dx == 0 && dy == 0) continue
+                    if (dx * dx + dy * dy > r * r) continue
+                    canvas.drawBitmap(base32, (offset + dx).toFloat(), (offset + dy).toFloat(), paint)
                 }
-                if (near) dst[i] = color or (0xFF shl 24)
             }
         }
-        bmp.setPixels(dst, 0, w, 0, 0, w, h)
+
+        canvas.drawBitmap(base32, offset.toFloat(), offset.toFloat(), null)
+        return out
     }
 
     /** Nearest-neighbor final scale (used when saving). */
@@ -213,9 +150,108 @@ object TextureProcessor {
             val srcY = floor((py + 0.5f) * scaleY).toInt().coerceIn(0, srcH - 1)
             for (px in 0 until dw) {
                 val srcX = floor((px + 0.5f) * scaleX).toInt().coerceIn(0, srcW - 1)
-                out.setPixel(px, py, src.getPixel(sx + srcX, sy + srcY))
+                var c = src.getPixel(sx + srcX, sy + srcY)
+                if (overlayAlpha > 0f) {
+                    val a = ((c ushr 24) and 0xFF) / 255f * (1f - overlayAlpha)
+                    c = (c and 0x00FFFFFF) or ((a * 255).toInt().coerceIn(0, 255) shl 24)
+                }
+                out.setPixel(px, py, c)
             }
         }
         return out
+    }
+
+    private fun getAverageColor(bmp: Bitmap): Rgb {
+        var rSum = 0L; var gSum = 0L; var bSum = 0L; var count = 0
+        val w = bmp.width
+        val h = bmp.height
+        for (y in 0 until h) {
+            for (x in 0 until w) {
+                val c = bmp.getPixel(x, y)
+                val a = (c ushr 24) and 0xFF
+                if (a < 128) continue
+                rSum += (c shr 16) and 0xFF
+                gSum += (c shr 8) and 0xFF
+                bSum += c and 0xFF
+                count++
+            }
+        }
+        if (count == 0) return Rgb(128, 128, 128)
+        return Rgb((rSum / count).toInt(), (gSum / count).toInt(), (bSum / count).toInt())
+    }
+
+    private val outlineGenerators = mapOf(
+        "auto_dark" to { avg: Rgb ->
+            Rgb(
+                min(80, (avg.r * 0.25).roundToInt()),
+                min(80, (avg.g * 0.25).roundToInt()),
+                min(80, (avg.b * 0.25).roundToInt())
+            )
+        },
+        "auto_darker" to { avg: Rgb ->
+            Rgb(
+                min(50, (avg.r * 0.15).roundToInt()),
+                min(50, (avg.g * 0.15).roundToInt()),
+                min(50, (avg.b * 0.15).roundToInt())
+            )
+        },
+        "auto_medium_dark" to { avg: Rgb ->
+            Rgb(
+                min(120, (avg.r * 0.4).roundToInt()),
+                min(120, (avg.g * 0.4).roundToInt()),
+                min(120, (avg.b * 0.4).roundToInt())
+            )
+        }
+    )
+
+    private val bgGenerators = mapOf(
+        "auto_light" to { avg: Rgb ->
+            Rgb(
+                min(230, (avg.r * 1.2 + 10).roundToInt()),
+                min(230, (avg.g * 1.2 + 10).roundToInt()),
+                min(230, (avg.b * 1.2 + 10).roundToInt())
+            )
+        },
+        "auto_lighter" to { avg: Rgb ->
+            Rgb(
+                min(250, (avg.r * 1.5 + 30).roundToInt()),
+                min(250, (avg.g * 1.5 + 30).roundToInt()),
+                min(250, (avg.b * 1.5 + 30).roundToInt())
+            )
+        },
+        "auto_medium_light" to { avg: Rgb ->
+            Rgb(
+                min(200, (avg.r * 0.9 + 30).roundToInt()),
+                min(200, (avg.g * 0.9 + 30).roundToInt()),
+                min(200, (avg.b * 0.9 + 30).roundToInt())
+            )
+        }
+    )
+
+    private fun rgbToHex(r: Int, g: Int, b: Int): String =
+        String.format("#%02x%02x%02x", r, g, b)
+
+    private fun resolveOutlineColor(presetOrHex: String, avg: Rgb): String {
+        if (presetOrHex.startsWith("auto_")) {
+            val gen = outlineGenerators[presetOrHex]
+            if (gen != null) {
+                val c = gen(avg)
+                return rgbToHex(c.r, c.g, c.b)
+            }
+            return "#000000"
+        }
+        return presetOrHex.ifBlank { "#000000" }
+    }
+
+    private fun resolveBgColor(presetOrHex: String, avg: Rgb): String {
+        if (presetOrHex.startsWith("auto_")) {
+            val gen = bgGenerators[presetOrHex]
+            if (gen != null) {
+                val c = gen(avg)
+                return rgbToHex(c.r, c.g, c.b)
+            }
+            return "#ffffff"
+        }
+        return presetOrHex.ifBlank { "#ffffff" }
     }
 }
