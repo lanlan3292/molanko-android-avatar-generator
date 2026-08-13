@@ -124,6 +124,10 @@ object OnlineSkinExtras {
                             context.getString(R.string.fetch_no_skin)
                         is MojangSkinFetcher.FetchError.Network ->
                             context.getString(R.string.fetch_network)
+                        is MojangSkinFetcher.FetchError.RateLimited ->
+                            context.getString(R.string.fetch_rate_limited)
+                        is MojangSkinFetcher.FetchError.ServerError ->
+                            context.getString(R.string.fetch_server_error)
                     }
                     val detail = e.message?.takeIf { it.isNotBlank() && it != base }
                     errorText = if (detail != null) "$base\n$detail" else base

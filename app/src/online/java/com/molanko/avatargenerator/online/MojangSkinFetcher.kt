@@ -12,6 +12,7 @@ import kotlinx.coroutines.job
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.util.UUID
 
 /**
@@ -30,6 +31,8 @@ object MojangSkinFetcher {
         class InvalidInput : FetchError("Invalid username or UUID")
         class PlayerNotFound : FetchError("Player not found")
         class NoSkin : FetchError("No skin texture on profile")
+        class RateLimited : FetchError("Mojang API rate limit exceeded. Please try again later")
+        class ServerError(code: Int) : FetchError("Mojang server error: HTTP $code")
         class Network(val detail: String, cause: Throwable? = null) : FetchError(detail)
     }
 
@@ -40,10 +43,10 @@ object MojangSkinFetcher {
         try {
             ensureActive()
             val uuidNoDash = resolveUuid(input)
-            
+
             ensureActive()
             val (skinUrl, name) = fetchSkinUrl(uuidNoDash)
-            
+
             ensureActive()
             val bmp = downloadBitmap(skinUrl)
                 ?: throw FetchError.NoSkin()
@@ -73,17 +76,23 @@ object MojangSkinFetcher {
         if (!input.matches(Regex("^[A-Za-z0-9_]{1,16}$"))) {
             throw FetchError.InvalidInput()
         }
-        
-        val conn = open("https://api.mojang.com/users/profiles/minecraft/$input")
+
+        val encodedName = URLEncoder.encode(input, "UTF-8")
+        val conn = open("https://api.mojang.com/users/profiles/minecraft/$encodedName")
+
         try {
             when (conn.responseCode) {
                 200 -> {
                     val body = conn.inputStream.bufferedReader().readText()
                     val id = JSONObject(body).optString("id", "")
-                    if (id.length != 32) throw FetchError.PlayerNotFound()
+                    if (id.length != 32 || !id.matches(Regex("^[0-9a-fA-F]{32}$"))) {
+                        throw FetchError.PlayerNotFound()
+                    }
                     return id.lowercase()
                 }
                 204, 404 -> throw FetchError.PlayerNotFound()
+                429 -> throw FetchError.RateLimited()
+                in 500..599 -> throw FetchError.ServerError(conn.responseCode)
                 else -> {
                     val errBody = runCatching { conn.errorStream?.bufferedReader()?.readText() }.getOrNull()
                     throw FetchError.Network("HTTP ${conn.responseCode}" + (errBody?.take(120)?.let { ": $it" } ?: ""))
@@ -95,7 +104,7 @@ object MojangSkinFetcher {
     }
 
     private suspend fun fetchSkinUrl(uuidNoDash: String): Pair<String, String?> {
-        val conn = open("https://sessionserver.mojang.com/session/minecraft/$uuidNoDash")
+        val conn = open("https://sessionserver.mojang.com/session/minecraft/profile/$uuidNoDash")
         try {
             when (conn.responseCode) {
                 200 -> {
@@ -112,7 +121,16 @@ object MojangSkinFetcher {
                         }
                     }
                     if (texturesB64.isNullOrBlank()) throw FetchError.NoSkin()
-                    val decoded = String(Base64.decode(texturesB64, Base64.DEFAULT))
+
+                    val decoded = try {
+                        String(
+                            Base64.decode(texturesB64, Base64.NO_WRAP),
+                            Charsets.UTF_8
+                        )
+                    } catch (e: IllegalArgumentException) {
+                        throw FetchError.Network("Invalid Mojang texture Base64", e)
+                    }
+
                     val textures = JSONObject(decoded)
                         .optJSONObject("textures")
                         ?.optJSONObject("SKIN")
@@ -122,6 +140,8 @@ object MojangSkinFetcher {
                     return url to name
                 }
                 204, 404 -> throw FetchError.PlayerNotFound()
+                429 -> throw FetchError.RateLimited()
+                in 500..599 -> throw FetchError.ServerError(conn.responseCode)
                 else -> {
                     val errBody = runCatching { conn.errorStream?.bufferedReader()?.readText() }.getOrNull()
                     throw FetchError.Network("HTTP ${conn.responseCode}" + (errBody?.take(120)?.let { ": $it" } ?: ""))
@@ -136,6 +156,14 @@ object MojangSkinFetcher {
         val conn = open(url)
         try {
             if (conn.responseCode != 200) {
+                if (conn.responseCode == 429) {
+                    throw FetchError.RateLimited()
+                }
+
+                if (conn.responseCode in 500..599) {
+                    throw FetchError.ServerError(conn.responseCode)
+                }
+
                 val errBody = runCatching { conn.errorStream?.bufferedReader()?.readText() }.getOrNull()
                 throw FetchError.Network(
                     "Skin download HTTP ${conn.responseCode}" +

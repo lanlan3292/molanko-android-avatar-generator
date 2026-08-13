@@ -41,4 +41,6 @@
     <string name="fetch_no_skin">该玩家没有皮肤贴图</string>
     <string name="fetch_network">网络错误，请检查连接</string>
     <string name="cancel">取消</string>
+    <string name="fetch_rate_limited">请求过于频繁</string>
+    <string name="fetch_server_error">服务器错误</string>
 </resources>

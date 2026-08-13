@@ -43,4 +43,6 @@
     <string name="fetch_no_skin">This player has no skin texture</string>
     <string name="fetch_network">Network error, check connection</string>
     <string name="cancel">Cancel</string>
+    <string name="fetch_rate_limited">Rate limited</string>
+    <string name="fetch_server_error">Server error</string>
 </resources>

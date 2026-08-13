@@ -41,4 +41,6 @@
     <string name="fetch_no_skin">該玩家沒有皮膚貼圖</string>
     <string name="fetch_network">網路錯誤，請檢查連線</string>
     <string name="cancel">取消</string>
+    <string name="fetch_rate_limited">請求過於頻繁</string>
+    <string name="fetch_server_error">伺服器錯誤</string>
 </resources>
