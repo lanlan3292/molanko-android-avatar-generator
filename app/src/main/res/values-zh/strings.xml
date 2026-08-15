@@ -45,4 +45,10 @@
     <string name="cancel">取消</string>
     <string name="fetch_rate_limited">请求过于频繁</string>
     <string name="fetch_server_error">服务器错误</string>
+    <string name="color_E53935">红色</string>
+    <string name="color_1E88E5">蓝色</string>
+    <string name="color_43A047">绿色</string>
+    <string name="color_FB8C00">橙色</string>
+    <string name="color_8E24AA">紫色</string>
+    <string name="color_000000">黑色</string>
 </resources>

@@ -47,6 +47,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.molanko.avatargenerator.R
 import com.molanko.avatargenerator.online.OnlineSkinExtras
@@ -66,26 +69,12 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var processJob by remember { mutableStateOf<Job?>(null) }
-    var scaleSliderPos by remember { mutableFloatStateOf(vm.scale) }
-    var outlineSliderPos by remember { mutableFloatStateOf(vm.outlineMode.toFloat()) }
-
-    LaunchedEffect(vm.scale) {
-        if (kotlin.math.abs(scaleSliderPos - vm.scale) > 0.01f) {
-            scaleSliderPos = vm.scale
-        }
-    }
 
     var sourceBitmap by vm::sourceBitmap
     var resultBitmap by vm::resultBitmap
     var isProcessing by vm::isProcessing
 
     var outlineMode by vm::outlineMode
-
-    LaunchedEffect(outlineMode) {
-        if (kotlin.math.abs(outlineSliderPos - outlineMode.toFloat()) > 0.01f) {
-            outlineSliderPos = outlineMode.toFloat()
-        }
-    }
 
     var outlinePreset by vm::outlinePreset
     var bgPreset by vm::bgPreset
@@ -379,24 +368,40 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                         Column {
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.outline_radius), style = MaterialTheme.typography.labelLarge)
-                            Slider(
-                                value = outlineSliderPos,
-                                onValueChange = { outlineSliderPos = it },
-                                valueRange = 0f..2f,
-                                onValueChangeFinished = {
-                                    val target = outlineSliderPos.roundToInt().toFloat().coerceIn(0f, 2f)
-                                    scope.launch {
-                                        val anim = Animatable(outlineSliderPos)
-                                        anim.animateTo(
-                                            targetValue = target,
-                                            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
-                                        ) { outlineSliderPos = value }
-                                        outlineMode = target.toInt()
-                                        outlineSliderPos = target
-                                        triggerProcess()
+                            val options = listOf("0", "1", "2")
+                            FlowRow(
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                                verticalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                options.forEachIndexed { index, label ->
+                                    ToggleButton(
+                                        checked = outlineMode == index,
+                                        onCheckedChange = {
+                                            if (outlineMode != index) {
+                                                outlineMode = index
+                                                triggerProcess()
+                                            }
+                                        },
+                                        colors = ToggleButtonDefaults.toggleButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                            checkedContentColor = MaterialTheme.colorScheme.onPrimary
+                                        ),
+                                        shapes = when (index) {
+                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                            options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                        },
+                                        modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
+                                    ) {
+                                        Text(label)
                                     }
                                 }
-                            )
+                            }
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.outline_color), style = MaterialTheme.typography.labelLarge)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
@@ -410,7 +415,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             }
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState())) {
                                 FilterChip(selected = showOutlineCustom, onClick = { showOutlineCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
-                                listOf("#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#000000").forEach { hex ->
+                                listOf("#E53935" to "R.string.color_E53935", "#1E88E5" to "R.string.color_1E88E5", "#43A047" to "R.string.color_43A047", "#FB8C00" to "R.string.color_FB8C00", "#8E24AA" to "R.string.color_8E24AA", "#000000" to "R.string.color_000000").forEach { (hex, label) ->
                                     Box(
                                         modifier = Modifier
                                             .size(28.dp)
@@ -523,23 +528,12 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 Switch(checked = fillBackground, onCheckedChange = { fillBackground = it; triggerProcess() })
                             }
                             Spacer(Modifier.height(12.dp))
-                            Text(stringResource(R.string.final_scale, scaleSliderPos.roundToInt()), style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.final_scale, scale.roundToInt()), style = MaterialTheme.typography.labelLarge)
                             Slider(
-                                value = scaleSliderPos,
-                                onValueChange = { scaleSliderPos = it },
+                                value = scale,
+                                onValueChange = { scale = it },
                                 valueRange = 1f..50f,
-                                onValueChangeFinished = {
-                                    val target = scaleSliderPos.roundToInt().toFloat().coerceIn(1f, 50f)
-                                    scope.launch {
-                                        val anim = Animatable(scaleSliderPos)
-                                        anim.animateTo(
-                                            targetValue = target,
-                                            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
-                                        ) { scaleSliderPos = value }
-                                        scale = target
-                                        scaleSliderPos = target
-                                    }
-                                }
+                                steps = 48
                             )
                             Spacer(Modifier.height(8.dp))
                             FilledTonalButton(

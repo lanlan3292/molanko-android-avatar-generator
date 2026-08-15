@@ -45,4 +45,10 @@
     <string name="cancel">Cancel</string>
     <string name="fetch_rate_limited">Rate limited</string>
     <string name="fetch_server_error">Server error</string>
+    <string name="color_E53935">Red</string>
+    <string name="color_1E88E5">Blue</string>
+    <string name="color_43A047">Green</string>
+    <string name="color_FB8C00">Orange</string>
+    <string name="color_8E24AA">Purple</string>
+    <string name="color_000000">Black</string>
 </resources>
