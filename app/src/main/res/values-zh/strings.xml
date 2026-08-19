@@ -14,6 +14,9 @@
     <string name="auto_darker">自动 (更深)</string>
     <string name="auto_lighter">自动 (更浅)</string>
     <string name="pure_white">纯白</string>
+    <string name="average_color">平均色</string>
+    <string name="average_color_hint">影响自动轮廓与背景颜色</string>
+    <string name="average_auto">自动</string>
     <string name="custom">自定义</string>
     <string name="upscale_48">放大到 48×48</string>
     <string name="fill_background">填充背景</string>
