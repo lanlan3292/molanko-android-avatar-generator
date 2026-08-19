@@ -24,7 +24,9 @@ object TextureProcessor {
         val bgColor: String = "#ffffff",      // hex or "auto_light" / "auto_lighter" / "auto_medium_light"
         val upscale48: Boolean = false,
         val fillBackground: Boolean = true,
-        val scale: Float = 1f
+        val scale: Float = 1f,
+        /** Optional override for auto outline/bg colour derivation. Null = compute from base texture without side shade. */
+        val averageColor: Rgb? = null
     )
 
     data class Rgb(val r: Int, val g: Int, val b: Int)
@@ -36,25 +38,21 @@ object TextureProcessor {
             "Image too small: ${source.width}×${source.height}, need at least 64×64"
         }
 
-        // 1. Head region average colour (64×16)
-        val head = Bitmap.createBitmap(64, 16, Bitmap.Config.ARGB_8888)
-        Canvas(head).drawBitmap(
-            source,
-            Rect(0, 0, 64, 16),
-            Rect(0, 0, 64, 16),
-            null
-        )
-        val headAvg = getAverageColor(head)
-        head.recycle()
+        // Average colour for auto outline/bg:
+        // prefer user override; otherwise sample from base texture WITHOUT side shade (matches JS)
+        val headAvg = options.averageColor ?: run {
+            val colorBase = createBaseTexture(source, applySideShade = false)
+            val avg = getAverageColor(colorBase)
+            colorBase.recycle()
+            avg
+        }
 
-        // 2. Base 32×32 texture
-        val base32 = createBaseTexture(source)
+        // Base 32×32 with side shade for actual output
+        val base32 = createBaseTexture(source, applySideShade = true)
 
-        // 3. Final canvas with optional outline / background
         val finalBase = buildFinalCanvas(base32, options, headAvg)
         base32.recycle()
 
-        // 4. Optional extra scale
         return if (options.scale <= 1f) {
             finalBase
         } else {
@@ -66,10 +64,10 @@ object TextureProcessor {
 
     // ---------- Core algorithms ----------
 
-    private fun createBaseTexture(source: Bitmap): Bitmap {
+    private fun createBaseTexture(source: Bitmap, applySideShade: Boolean = true): Bitmap {
         val canvasBmp = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888)
         val ctx = Canvas(canvasBmp)
-        val alpha = 76f / 255f // ≈ 0.298
+        val alpha = if (applySideShade) 76f / 255f else 0f // ≈ 0.298 when shaded
 
         // Front / side parts
         drawStretch(ctx, source, 56, 8, 8, 8, 10, 7, 18, 18, 0f)
@@ -135,8 +133,8 @@ object TextureProcessor {
     fun applyScale(source: Bitmap, scale: Float): Bitmap {
         val sw = source.width
         val sh = source.height
-        val dw = (sw * scale).roundToInt()
-        val dh = (sh * scale).roundToInt()
+        val dw = (sw * scale).roundToInt().coerceAtLeast(1)
+        val dh = (sh * scale).roundToInt().coerceAtLeast(1)
         return drawNearestNeighbor(source, 0, 0, sw, sh, dw, dh, 0f)
     }
 
@@ -149,7 +147,6 @@ object TextureProcessor {
         dx: Int, dy: Int, dw: Int, dh: Int,
         overlayAlpha: Float
     ) {
-        // Fast path: 1:1 no overlay
         if (sw == dw && sh == dh && overlayAlpha <= 0f) {
             destCanvas.drawBitmap(
                 src,
@@ -168,21 +165,13 @@ object TextureProcessor {
         scaled.recycle()
     }
 
-    /**
-     * Exact port of the JS drawNearestNeighbor.
-     * Uses floor((px - dx + 0.5) * scale) sampling.
-     */
     private fun drawNearestNeighbor(
         src: Bitmap,
         sx: Int, sy: Int, srcW: Int, srcH: Int,
         dw: Int, dh: Int,
         overlayAlpha: Float
     ): Bitmap {
-        val dest = Bitmap.createBitmap(dw, dh, Bitmap.Config.ARGB_8888)
-        val destPixels = IntArray(dw * dh)
-        val srcPixels = IntArray(srcW * srcH)
-        src.getPixels(srcPixels, 0, srcW, sx, sy, srcW, srcH)
-
+        val out = Bitmap.createBitmap(dw, dh, Bitmap.Config.ARGB_8888)
         val scaleX = srcW.toFloat() / dw
         val scaleY = srcH.toFloat() / dh
         val hasOverlay = overlayAlpha > 0f
@@ -190,34 +179,24 @@ object TextureProcessor {
 
         for (py in 0 until dh) {
             val srcY = floor((py + 0.5f) * scaleY).toInt().coerceIn(0, srcH - 1)
-            val srcRow = srcY * srcW
             for (px in 0 until dw) {
                 val srcX = floor((px + 0.5f) * scaleX).toInt().coerceIn(0, srcW - 1)
-                val si = srcRow + srcX
-                var pixel = srcPixels[si]
-                val a = Color.alpha(pixel)
+                val c = src.getPixel(sx + srcX, sy + srcY)
+                val a = (c ushr 24) and 0xFF
+                if (a == 0) continue
 
-                if (a == 0) {
-                    destPixels[py * dw + px] = 0 // fully transparent
-                    continue
-                }
-
-                var r = Color.red(pixel)
-                var g = Color.green(pixel)
-                var b = Color.blue(pixel)
-
+                var r = (c shr 16) and 0xFF
+                var g = (c shr 8) and 0xFF
+                var b = c and 0xFF
                 if (hasOverlay) {
                     r = (r * invAlpha).roundToInt()
                     g = (g * invAlpha).roundToInt()
                     b = (b * invAlpha).roundToInt()
                 }
-
-                destPixels[py * dw + px] = Color.argb(a, r, g, b)
+                out.setPixel(px, py, Color.argb(a, r, g, b))
             }
         }
-
-        dest.setPixels(destPixels, 0, dw, 0, 0, dw, dh)
-        return dest
+        return out
     }
 
     private fun applyOutline(
@@ -226,93 +205,92 @@ object TextureProcessor {
         content: Bitmap,
         offsetX: Int,
         offsetY: Int,
-        radius: Int,
-        outlineHex: String
+        outlineRadius: Int,
+        outlineColorHex: String
     ) {
         val dw = destBitmap.width
         val dh = destBitmap.height
         val pixels = IntArray(dw * dh)
         destBitmap.getPixels(pixels, 0, dw, 0, 0, dw, dh)
 
-        val solid = HashSet<Int>()
-        val contentPixels = IntArray(content.width * content.height)
-        content.getPixels(contentPixels, 0, content.width, 0, 0, content.width, content.height)
+        val solid = BooleanArray(dw * dh)
+        val cw = content.width
+        val ch = content.height
+        val contentPixels = IntArray(cw * ch)
+        content.getPixels(contentPixels, 0, cw, 0, 0, cw, ch)
 
-        for (y in 0 until content.height) {
-            for (x in 0 until content.width) {
-                if (Color.alpha(contentPixels[y * content.width + x]) > 0) {
+        for (y in 0 until ch) {
+            for (x in 0 until cw) {
+                if (((contentPixels[y * cw + x] ushr 24) and 0xFF) > 0) {
                     val gx = x + offsetX
                     val gy = y + offsetY
                     if (gx in 0 until dw && gy in 0 until dh) {
-                        solid.add(gy * dw + gx)
+                        solid[gy * dw + gx] = true
                     }
                 }
             }
         }
 
-        val outline = HashSet<Int>()
-        val minX = max(0, offsetX - radius)
-        val maxX = min(dw - 1, offsetX + content.width - 1 + radius)
-        val minY = max(0, offsetY - radius)
-        val maxY = min(dh - 1, offsetY + content.height - 1 + radius)
+        val outlineColor = Color.parseColor(outlineColorHex) or (0xFF shl 24)
+        val minX = max(0, offsetX - outlineRadius)
+        val maxX = min(dw - 1, offsetX + cw - 1 + outlineRadius)
+        val minY = max(0, offsetY - outlineRadius)
+        val maxY = min(dh - 1, offsetY + ch - 1 + outlineRadius)
 
         for (y in minY..maxY) {
             for (x in minX..maxX) {
                 val idx = y * dw + x
-                if (solid.contains(idx)) continue
-
+                if (solid[idx]) continue
                 var found = false
-                outer@ for (dy in -radius..radius) {
-                    for (dx in -radius..radius) {
+                for (dy in -outlineRadius..outlineRadius) {
+                    for (dx in -outlineRadius..outlineRadius) {
                         if (dx == 0 && dy == 0) continue
                         val nx = x + dx
                         val ny = y + dy
-                        if (nx < 0 || nx >= dw || ny < 0 || ny >= dh) continue
-                        if (solid.contains(ny * dw + nx)) {
+                        if (nx !in 0 until dw || ny !in 0 until dh) continue
+                        if (solid[ny * dw + nx]) {
                             found = true
-                            break@outer
+                            break
                         }
                     }
+                    if (found) break
                 }
-                if (found) outline.add(idx)
+                if (found) pixels[idx] = outlineColor
             }
-        }
-
-        val outlineColor = Color.parseColor(outlineHex)
-        for (idx in outline) {
-            pixels[idx] = outlineColor
         }
         destBitmap.setPixels(pixels, 0, dw, 0, 0, dw, dh)
     }
 
-    // ---------- Colour helpers ----------
+    fun parseHexToRgb(hex: String): Rgb? {
+        val h = hex.trim().removePrefix("#")
+        if (h.length != 6) return null
+        return try {
+            Rgb(
+                h.substring(0, 2).toInt(16),
+                h.substring(2, 4).toInt(16),
+                h.substring(4, 6).toInt(16)
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     fun getAverageColor(bitmap: Bitmap): Rgb {
+        var rSum = 0L; var gSum = 0L; var bSum = 0L; var count = 0
         val w = bitmap.width
         val h = bitmap.height
         val pixels = IntArray(w * h)
         bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
-
-        var r = 0L
-        var g = 0L
-        var b = 0L
-        var count = 0
-
-        for (p in pixels) {
-            if (Color.alpha(p) > 0) {
-                r += Color.red(p)
-                g += Color.green(p)
-                b += Color.blue(p)
-                count++
-            }
+        for (c in pixels) {
+            val a = (c ushr 24) and 0xFF
+            if (a == 0) continue
+            rSum += (c shr 16) and 0xFF
+            gSum += (c shr 8) and 0xFF
+            bSum += c and 0xFF
+            count++
         }
-
         if (count == 0) return Rgb(128, 128, 128)
-        return Rgb(
-            (r / count).toInt(),
-            (g / count).toInt(),
-            (b / count).toInt()
-        )
+        return Rgb((rSum / count).toInt(), (gSum / count).toInt(), (bSum / count).toInt())
     }
 
     private val outlineGenerators = mapOf(
