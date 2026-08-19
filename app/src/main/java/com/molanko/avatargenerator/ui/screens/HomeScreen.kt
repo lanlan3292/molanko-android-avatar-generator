@@ -88,6 +88,9 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
     var outlineCustomHex by vm::outlineCustomHex
     var bgCustomHex by vm::bgCustomHex
 
+    var autoAverage by vm::autoAverage
+    var averageColorHex by vm::averageColorHex
+
     var displayBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var newBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val alpha = remember { Animatable(0f) }
@@ -121,6 +124,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
         up48: Boolean,
         fillBg: Boolean,
         sc: Float,
+        avgColor: TextureProcessor.Rgb? = null,
         onResult: (Bitmap) -> Unit
     ) {
         processJob?.cancel()
@@ -136,7 +140,8 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             bgColor = bgColor,
                             upscale48 = up48,
                             fillBackground = fillBg,
-                            scale = sc
+                            scale = sc,
+                            averageColor = avgColor
                         )
                     )
                 }
@@ -153,9 +158,14 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
         }
     }
 
+    fun currentAverageColor(): TextureProcessor.Rgb? {
+        if (autoAverage) return null
+        return TextureProcessor.parseHexToRgb(averageColorHex)
+    }
+
     fun triggerProcess() {
         sourceBitmap?.let { src ->
-            processImage(src, outlineMode, outlinePreset, bgPreset, upscale48, fillBackground, 1f) { resultBitmap = it }
+            processImage(src, outlineMode, outlinePreset, bgPreset, upscale48, fillBackground, 1f, currentAverageColor()) { resultBitmap = it }
         }
     }
 
@@ -178,7 +188,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
             }
             if (bmp != null) {
                 sourceBitmap = bmp
-                processImage(bmp, outlineMode, outlinePreset, bgPreset, upscale48, fillBackground, 1f) { resultBitmap = it }
+                processImage(bmp, outlineMode, outlinePreset, bgPreset, upscale48, fillBackground, 1f, currentAverageColor()) { resultBitmap = it }
             } else {
                 Toast.makeText(context, context.getString(R.string.load_failed), Toast.LENGTH_SHORT).show()
             }
@@ -270,7 +280,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                     sourceBitmap = bmp
                     processImage(
                         bmp, outlineMode, outlinePreset, bgPreset,
-                        upscale48, fillBackground, 1f
+                        upscale48, fillBackground, 1f, currentAverageColor()
                     ) { resultBitmap = it }
                 }
                 MediumFloatingActionButton(
@@ -402,6 +412,73 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                     }
                                 }
                             }
+                            Spacer(Modifier.height(16.dp))
+
+                            // Average colour (affects auto outline / bg)
+                            Text(stringResource(R.string.average_color), style = MaterialTheme.typography.labelLarge)
+                            Text(
+                                stringResource(R.string.average_color_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                FilterChip(
+                                    selected = autoAverage,
+                                    onClick = {
+                                        autoAverage = true
+                                        triggerProcess()
+                                    },
+                                    label = { Text(stringResource(R.string.average_auto), fontSize = 12.sp) }
+                                )
+                                FilterChip(
+                                    selected = !autoAverage,
+                                    onClick = { autoAverage = false },
+                                    label = { Text(stringResource(R.string.custom), fontSize = 12.sp) }
+                                )
+                            }
+                            AnimatedVisibility(visible = !autoAverage) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = averageColorHex,
+                                        onValueChange = { averageColorHex = it },
+                                        label = { Text(stringResource(R.string.hex_hint)) },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(1f),
+                                        leadingIcon = {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(20.dp)
+                                                    .clip(CircleShape)
+                                                    .background(parseColorSafe(averageColorHex))
+                                            )
+                                        },
+                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                        keyboardActions = KeyboardActions(onDone = {
+                                            if (isValidHex(averageColorHex)) {
+                                                averageColorHex = normalizeHex(averageColorHex)
+                                                triggerProcess()
+                                            }
+                                        })
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    FilledTonalButton(onClick = {
+                                        if (isValidHex(averageColorHex)) {
+                                            averageColorHex = normalizeHex(averageColorHex)
+                                            autoAverage = false
+                                            triggerProcess()
+                                        }
+                                    }) { Text(stringResource(R.string.apply_custom)) }
+                                }
+                            }
+
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.outline_color), style = MaterialTheme.typography.labelLarge)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
