@@ -26,4 +26,8 @@ class AvatarViewModel : ViewModel() {
     var showBgCustom by mutableStateOf(false)
     var outlineCustomHex by mutableStateOf("#000000")
     var bgCustomHex by mutableStateOf("#FFFFFF")
+
+    /** When true, average colour is derived from the skin; otherwise use averageColorHex. */
+    var autoAverage by mutableStateOf(true)
+    var averageColorHex by mutableStateOf("#808080")
 }

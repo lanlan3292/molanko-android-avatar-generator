@@ -14,6 +14,9 @@
     <string name="auto_darker">Auto (Darker)</string>
     <string name="auto_lighter">Auto (Lighter)</string>
     <string name="pure_white">White</string>
+    <string name="average_color">Average color</string>
+    <string name="average_color_hint">Affects auto outline and background colors</string>
+    <string name="average_auto">Auto</string>
     <string name="custom">Custom</string>
     <string name="upscale_48">Upscale to 48×48</string>
     <string name="fill_background">Fill background</string>
