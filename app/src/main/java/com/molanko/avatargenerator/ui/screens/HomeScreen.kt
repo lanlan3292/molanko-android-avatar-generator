@@ -442,40 +442,75 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                                 )
                             }
                             AnimatedVisibility(visible = !autoAverage) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
-                                    OutlinedTextField(
-                                        value = averageColorHex,
-                                        onValueChange = { averageColorHex = it },
-                                        label = { Text(stringResource(R.string.hex_hint)) },
-                                        singleLine = true,
-                                        modifier = Modifier.weight(1f),
-                                        leadingIcon = {
+                                Column(modifier = Modifier.padding(top = 8.dp)) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 8.dp)
+                                    ) {
+                                        listOf(
+                                            "#E53935" to R.string.color_E53935,
+                                            "#1E88E5" to R.string.color_1E88E5,
+                                            "#43A047" to R.string.color_43A047,
+                                            "#FB8C00" to R.string.color_FB8C00,
+                                            "#8E24AA" to R.string.color_8E24AA,
+                                            "#000000" to R.string.color_000000
+                                        ).forEach { (hex, _) ->
+                                            val isSelected = averageColorHex.equals(hex, ignoreCase = true)
                                             Box(
                                                 modifier = Modifier
-                                                    .size(20.dp)
+                                                    .size(28.dp)
                                                     .clip(CircleShape)
-                                                    .background(parseColorSafe(averageColorHex))
+                                                    .background(parseColorSafe(hex))
+                                                    .border(
+                                                        width = if (isSelected) 2.dp else 0.dp,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        shape = CircleShape
+                                                    )
+                                                    .clickable {
+                                                        averageColorHex = hex
+                                                        autoAverage = false
+                                                        triggerProcess()
+                                                    }
                                             )
-                                        },
-                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                        keyboardActions = KeyboardActions(onDone = {
+                                        }
+                                    }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedTextField(
+                                            value = averageColorHex,
+                                            onValueChange = { averageColorHex = it },
+                                            label = { Text(stringResource(R.string.hex_hint)) },
+                                            singleLine = true,
+                                            modifier = Modifier.weight(1f),
+                                            leadingIcon = {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(20.dp)
+                                                        .clip(CircleShape)
+                                                        .background(parseColorSafe(averageColorHex))
+                                                )
+                                            },
+                                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                            keyboardActions = KeyboardActions(onDone = {
+                                                if (isValidHex(averageColorHex)) {
+                                                    averageColorHex = normalizeHex(averageColorHex)
+                                                    triggerProcess()
+                                                }
+                                            })
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        FilledTonalButton(onClick = {
                                             if (isValidHex(averageColorHex)) {
                                                 averageColorHex = normalizeHex(averageColorHex)
+                                                autoAverage = false
                                                 triggerProcess()
                                             }
-                                        })
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    FilledTonalButton(onClick = {
-                                        if (isValidHex(averageColorHex)) {
-                                            averageColorHex = normalizeHex(averageColorHex)
-                                            autoAverage = false
-                                            triggerProcess()
-                                        }
-                                    }) { Text(stringResource(R.string.apply_custom)) }
+                                        }) { Text(stringResource(R.string.apply_custom)) }
+                                    }
                                 }
                             }
 
@@ -492,7 +527,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             }
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState())) {
                                 FilterChip(selected = showOutlineCustom, onClick = { showOutlineCustom = true }, label = { Text(stringResource(R.string.custom), fontSize = 12.sp) })
-                                listOf("#E53935" to "R.string.color_E53935", "#1E88E5" to "R.string.color_1E88E5", "#43A047" to "R.string.color_43A047", "#FB8C00" to "R.string.color_FB8C00", "#8E24AA" to "R.string.color_8E24AA", "#000000" to "R.string.color_000000").forEach { (hex, label) ->
+                                listOf("#E53935" to R.string.color_E53935, "#1E88E5" to R.string.color_1E88E5, "#43A047" to R.string.color_43A047, "#FB8C00" to R.string.color_FB8C00, "#8E24AA" to R.string.color_8E24AA, "#000000" to R.string.color_000000).forEach { (hex, label) ->
                                     Box(
                                         modifier = Modifier
                                             .size(28.dp)
