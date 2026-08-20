@@ -15,8 +15,8 @@ class AvatarViewModel : ViewModel() {
     var isProcessing by mutableStateOf(false)
 
     var outlineMode by mutableIntStateOf(2)
-    var outlinePreset by mutableStateOf("auto_dark")
-    var bgPreset by mutableStateOf("auto_light")
+    var outlinePreset by mutableStateOf("auto")
+    var bgPreset by mutableStateOf("auto")
     var upscale48 by mutableStateOf(true)
     var fillBackground by mutableStateOf(true)
     var scale by mutableFloatStateOf(5f)

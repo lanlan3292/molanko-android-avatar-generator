@@ -294,7 +294,7 @@ object TextureProcessor {
     }
 
     private val outlineGenerators = mapOf(
-        "auto_dark" to { avg: Rgb ->
+        "auto" to { avg: Rgb ->
             Rgb(
                 min(80, (avg.r * 0.25).roundToInt()),
                 min(80, (avg.g * 0.25).roundToInt()),
@@ -308,7 +308,7 @@ object TextureProcessor {
                 min(50, (avg.b * 0.15).roundToInt())
             )
         },
-        "auto_medium_dark" to { avg: Rgb ->
+        "auto_lighter" to { avg: Rgb ->
             Rgb(
                 min(120, (avg.r * 0.4).roundToInt()),
                 min(120, (avg.g * 0.4).roundToInt()),
@@ -318,7 +318,7 @@ object TextureProcessor {
     )
 
     private val bgGenerators = mapOf(
-        "auto_light" to { avg: Rgb ->
+        "auto" to { avg: Rgb ->
             Rgb(
                 min(230, (avg.r * 1.2 + 10).roundToInt()),
                 min(230, (avg.g * 1.2 + 10).roundToInt()),
@@ -332,7 +332,7 @@ object TextureProcessor {
                 min(250, (avg.b * 1.5 + 30).roundToInt())
             )
         },
-        "auto_medium_light" to { avg: Rgb ->
+        "auto_darker" to { avg: Rgb ->
             Rgb(
                 min(200, (avg.r * 0.9 + 30).roundToInt()),
                 min(200, (avg.g * 0.9 + 30).roundToInt()),
@@ -345,7 +345,7 @@ object TextureProcessor {
         String.format("#%02x%02x%02x", r, g, b)
 
     private fun resolveOutlineColor(presetOrHex: String, avg: Rgb): String {
-        if (presetOrHex.startsWith("auto_")) {
+        if (presetOrHex.startsWith("auto")) {
             val gen = outlineGenerators[presetOrHex]
             if (gen != null) {
                 val c = gen(avg)
@@ -357,7 +357,7 @@ object TextureProcessor {
     }
 
     private fun resolveBgColor(presetOrHex: String, avg: Rgb): String {
-        if (presetOrHex.startsWith("auto_")) {
+        if (presetOrHex.startsWith("auto")) {
             val gen = bgGenerators[presetOrHex]
             if (gen != null) {
                 val c = gen(avg)

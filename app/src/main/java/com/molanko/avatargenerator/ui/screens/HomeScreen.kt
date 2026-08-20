@@ -517,7 +517,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.outline_color), style = MaterialTheme.typography.labelLarge)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                                listOf("auto_dark" to R.string.auto, "auto_darker" to R.string.auto_darker, "auto_medium_dark" to R.string.auto_lighter).forEach { (value, labelRes) ->
+                                listOf("auto" to R.string.auto, "auto_darker" to R.string.auto_darker, "auto_lighter" to R.string.auto_lighter).forEach { (value, labelRes) ->
                                     FilterChip(
                                         selected = outlinePreset == value && !showOutlineCustom,
                                         onClick = { outlinePreset = value; showOutlineCustom = false; triggerProcess() },
@@ -575,7 +575,7 @@ fun HomeScreen(vm: AvatarViewModel = viewModel()) {
                             Spacer(Modifier.height(16.dp))
                             Text(stringResource(R.string.bg_color), style = MaterialTheme.typography.labelLarge)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                                listOf("auto_light" to R.string.auto, "auto_lighter" to R.string.auto_lighter, "auto_medium_light" to R.string.auto_darker).forEach { (value, labelRes) ->
+                                listOf("auto" to R.string.auto, "auto_lighter" to R.string.auto_lighter, "auto_darker" to R.string.auto_darker).forEach { (value, labelRes) ->
                                     FilterChip(
                                         selected = bgPreset == value && !showBgCustom,
                                         onClick = { bgPreset = value; showBgCustom = false; triggerProcess() },
