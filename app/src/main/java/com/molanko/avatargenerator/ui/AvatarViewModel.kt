@@ -19,7 +19,7 @@ class AvatarViewModel : ViewModel() {
     var bgPreset by mutableStateOf("auto")
     var upscale48 by mutableStateOf(true)
     var fillBackground by mutableStateOf(true)
-    var scale by mutableFloatStateOf(5f)
+    var scale by mutableFloatStateOf(10f)
     var showOptions by mutableStateOf(true)
 
     var showOutlineCustom by mutableStateOf(false)
